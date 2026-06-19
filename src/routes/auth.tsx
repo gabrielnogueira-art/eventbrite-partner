@@ -19,9 +19,13 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/", replace: true });
-    });
+    try {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user) navigate({ to: "/", replace: true });
+      }).catch(err => console.error("Supabase getUser error:", err));
+    } catch (err) {
+      console.error("Erro ao verificar usuário do Supabase:", err);
+    }
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +37,12 @@ function AuthPage() {
       password: String(fd.get("password")),
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = error.message === "{}" || !error.message 
+        ? "Erro interno no servidor de autenticação. O usuário pode estar corrompido." 
+        : error.message;
+      return toast.error(msg);
+    }
     toast.success("Bem-vindo!");
     navigate({ to: "/", replace: true });
   };

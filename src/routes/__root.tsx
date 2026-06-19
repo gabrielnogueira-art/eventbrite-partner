@@ -78,12 +78,18 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-    });
-    return () => sub.subscription.unsubscribe();
+    let subscription: { unsubscribe: () => void } | undefined;
+    try {
+      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+        router.invalidate();
+        if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      });
+      subscription = sub.subscription;
+    } catch (err) {
+      console.error("Erro ao inicializar o Supabase. Verifique se as variáveis de ambiente estão configuradas no Lovable:", err);
+    }
+    return () => subscription?.unsubscribe();
   }, [router, queryClient]);
 
   return (
