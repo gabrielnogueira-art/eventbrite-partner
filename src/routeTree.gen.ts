@@ -9,61 +9,230 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedMyTicketsRouteImport } from './routes/_authenticated/my-tickets'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedEventsIdRouteImport } from './routes/_authenticated/events.$id'
+import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_authenticated/checkout.$orderId'
+import { Route as AuthenticatedAdminEventsNewRouteImport } from './routes/_authenticated/admin.events.new'
+import { Route as AuthenticatedAdminEventsIdRouteImport } from './routes/_authenticated/admin.events.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMyTicketsRoute = AuthenticatedMyTicketsRouteImport.update({
+  id: '/my-tickets',
+  path: '/my-tickets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventsIdRoute = AuthenticatedEventsIdRouteImport.update({
+  id: '/events/$id',
+  path: '/events/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCheckoutOrderIdRoute =
+  AuthenticatedCheckoutOrderIdRouteImport.update({
+    id: '/checkout/$orderId',
+    path: '/checkout/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminEventsNewRoute =
+  AuthenticatedAdminEventsNewRouteImport.update({
+    id: '/admin/events/new',
+    path: '/admin/events/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminEventsIdRoute =
+  AuthenticatedAdminEventsIdRouteImport.update({
+    id: '/admin/events/$id',
+    path: '/admin/events/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/my-tickets': typeof AuthenticatedMyTicketsRoute
+  '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
+  '/events/$id': typeof AuthenticatedEventsIdRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/events/$id': typeof AuthenticatedAdminEventsIdRoute
+  '/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/my-tickets': typeof AuthenticatedMyTicketsRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
+  '/events/$id': typeof AuthenticatedEventsIdRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/events/$id': typeof AuthenticatedAdminEventsIdRoute
+  '/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/my-tickets': typeof AuthenticatedMyTicketsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
+  '/_authenticated/events/$id': typeof AuthenticatedEventsIdRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/events/$id': typeof AuthenticatedAdminEventsIdRoute
+  '/_authenticated/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/my-tickets'
+    | '/checkout/$orderId'
+    | '/events/$id'
+    | '/admin/'
+    | '/admin/events/$id'
+    | '/admin/events/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/auth'
+    | '/my-tickets'
+    | '/'
+    | '/checkout/$orderId'
+    | '/events/$id'
+    | '/admin'
+    | '/admin/events/$id'
+    | '/admin/events/new'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/my-tickets'
+    | '/_authenticated/'
+    | '/_authenticated/checkout/$orderId'
+    | '/_authenticated/events/$id'
+    | '/_authenticated/admin/'
+    | '/_authenticated/admin/events/$id'
+    | '/_authenticated/admin/events/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-tickets': {
+      id: '/_authenticated/my-tickets'
+      path: '/my-tickets'
+      fullPath: '/my-tickets'
+      preLoaderRoute: typeof AuthenticatedMyTicketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/$id': {
+      id: '/_authenticated/events/$id'
+      path: '/events/$id'
+      fullPath: '/events/$id'
+      preLoaderRoute: typeof AuthenticatedEventsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/checkout/$orderId': {
+      id: '/_authenticated/checkout/$orderId'
+      path: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId'
+      preLoaderRoute: typeof AuthenticatedCheckoutOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/events/new': {
+      id: '/_authenticated/admin/events/new'
+      path: '/admin/events/new'
+      fullPath: '/admin/events/new'
+      preLoaderRoute: typeof AuthenticatedAdminEventsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/events/$id': {
+      id: '/_authenticated/admin/events/$id'
+      path: '/admin/events/$id'
+      fullPath: '/admin/events/$id'
+      preLoaderRoute: typeof AuthenticatedAdminEventsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMyTicketsRoute: typeof AuthenticatedMyTicketsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCheckoutOrderIdRoute: typeof AuthenticatedCheckoutOrderIdRoute
+  AuthenticatedEventsIdRoute: typeof AuthenticatedEventsIdRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminEventsIdRoute: typeof AuthenticatedAdminEventsIdRoute
+  AuthenticatedAdminEventsNewRoute: typeof AuthenticatedAdminEventsNewRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMyTicketsRoute: AuthenticatedMyTicketsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCheckoutOrderIdRoute: AuthenticatedCheckoutOrderIdRoute,
+  AuthenticatedEventsIdRoute: AuthenticatedEventsIdRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminEventsIdRoute: AuthenticatedAdminEventsIdRoute,
+  AuthenticatedAdminEventsNewRoute: AuthenticatedAdminEventsNewRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
