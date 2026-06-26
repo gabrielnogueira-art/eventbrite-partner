@@ -22,7 +22,9 @@ function MyTicketsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, starts_at, location_name), ticket_lots(name), order_participants(full_name, email)")
+        .select(
+          "*, events(title, starts_at, location_name), ticket_lots(name), order_participants(full_name, email)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -34,7 +36,9 @@ function MyTicketsPage() {
       <div className="mx-auto max-w-4xl p-6 lg:p-10">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Meus ingressos</h1>
         {orders.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-muted-foreground">Você ainda não comprou nenhum ingresso.</Card>
+          <Card className="p-10 text-center text-sm text-muted-foreground">
+            Você ainda não comprou nenhum ingresso.
+          </Card>
         ) : (
           <div className="space-y-4">
             {orders.map((o: any) => {
@@ -44,17 +48,29 @@ function MyTicketsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="font-semibold">{o.events?.title}</div>
-                      <div className="text-xs text-muted-foreground">{o.events?.starts_at && fmtDateTime(o.events.starts_at)} · {o.events?.location_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {o.events?.starts_at && fmtDateTime(o.events.starts_at)} ·{" "}
+                        {o.events?.location_name}
+                      </div>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.cls}`}>{s.label}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.cls}`}>
+                      {s.label}
+                    </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm">
-                    <div><span className="font-medium">{o.ticket_lots?.name}</span> · {o.quantity} ingresso(s)</div>
+                    <div>
+                      <span className="font-medium">{o.ticket_lots?.name}</span> · {o.quantity}{" "}
+                      ingresso(s)
+                    </div>
                     <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
                   </div>
                   {o.order_participants?.length > 0 && (
                     <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">
-                      {o.order_participants.map((p: any, i: number) => <div key={i}>{p.full_name} — {p.email}</div>)}
+                      {o.order_participants.map((p: any, i: number) => (
+                        <div key={i}>
+                          {p.full_name} — {p.email}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </Card>

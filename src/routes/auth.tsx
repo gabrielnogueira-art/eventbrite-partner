@@ -20,9 +20,12 @@ function AuthPage() {
 
   useEffect(() => {
     try {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data?.user) navigate({ to: "/", replace: true });
-      }).catch(err => console.error("Supabase getUser error:", err));
+      supabase.auth
+        .getUser()
+        .then(({ data }) => {
+          if (data?.user) navigate({ to: "/", replace: true });
+        })
+        .catch((err) => console.error("Supabase getUser error:", err));
     } catch (err) {
       console.error("Erro ao verificar usuário do Supabase:", err);
     }
@@ -38,10 +41,9 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      const msg = error.message === "{}" || !error.message 
-        ? "Erro interno no servidor de autenticação. O usuário pode estar corrompido." 
-        : error.message;
-      return toast.error(msg);
+      console.error("DEBUG LOGIN ERROR:", error);
+      const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | Raw: ${rawError}`);
     }
     toast.success("Bem-vindo!");
     navigate({ to: "/", replace: true });
@@ -72,7 +74,9 @@ function AuthPage() {
             <Ticket className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Portal EJ</h1>
-          <p className="text-sm text-muted-foreground">Eventos e ingressos para Empresas Juniores</p>
+          <p className="text-sm text-muted-foreground">
+            Eventos e ingressos para Empresas Juniores
+          </p>
         </div>
         <Card className="p-6">
           <Tabs defaultValue="signin">
@@ -82,23 +86,43 @@ function AuthPage() {
             </TabsList>
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4 pt-4">
-                <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" name="email" type="email" required /></div>
-                <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" required minLength={6} /></div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Entrando..." : "Entrar"}</Button>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input id="email" name="email" type="email" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input id="password" name="password" type="password" required minLength={6} />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Entrando..." : "Entrar"}
+                </Button>
               </form>
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4 pt-4">
-                <div className="space-y-2"><Label htmlFor="su-name">Nome completo</Label><Input id="su-name" name="full_name" required /></div>
-                <div className="space-y-2"><Label htmlFor="su-email">E-mail</Label><Input id="su-email" name="email" type="email" required /></div>
-                <div className="space-y-2"><Label htmlFor="su-pw">Senha</Label><Input id="su-pw" name="password" type="password" required minLength={8} /></div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Criando..." : "Criar conta"}</Button>
+                <div className="space-y-2">
+                  <Label htmlFor="su-name">Nome completo</Label>
+                  <Input id="su-name" name="full_name" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="su-email">E-mail</Label>
+                  <Input id="su-email" name="email" type="email" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="su-pw">Senha</Label>
+                  <Input id="su-pw" name="password" type="password" required minLength={8} />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Criando..." : "Criar conta"}
+                </Button>
               </form>
             </TabsContent>
           </Tabs>
         </Card>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Logins de teste: <strong>admin@portalej.test</strong> / Admin123! · <strong>user@portalej.test</strong> / User123!
+          Logins de teste: <strong>admin@portalej.test</strong> / Admin123! ·{" "}
+          <strong>user@portalej.test</strong> / User123!
         </p>
       </div>
     </div>

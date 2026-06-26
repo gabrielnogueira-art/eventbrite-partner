@@ -32,7 +32,7 @@ Edge function agendada (ou checada on-read) marca pedidos `pending` com mais de 
 - `user_roles` (user_id, role: 'admin' | 'user') — separado, com `has_role()` SECURITY DEFINER
 - `events` (id, title, organizer, description, cover_url, location_name, address, starts_at, ends_at, cancellation_policy, max_tickets_per_user, created_by)
 - `ticket_lots` (id, event_id, name, price_cents, total_quantity, sold_quantity, opens_at, closes_at)
-- `orders` (id, user_id, event_id, lot_id, quantity, status, payment_method, total_cents, reserved_until, paid_at, billing_*)
+- `orders` (id, user*id, event_id, lot_id, quantity, status, payment_method, total_cents, reserved_until, paid_at, billing*\*)
 - `order_participants` (id, order_id, full_name, email)
 - Storage bucket `event-covers` (público para leitura)
 - RLS: usuário vê só seus pedidos; admin (via `has_role`) gerencia eventos/lotes/pedidos; eventos e lotes públicos para leitura autenticada
@@ -61,6 +61,7 @@ Paleta inspirada nos prints: azul vibrante (#2B7FFF) como primary, fundo claro n
 ## Logins de teste
 
 Ao final, criarei via migration (seed) e te entrego:
+
 - **Admin**: admin@portalej.test / Admin123!
 - **Usuário**: user@portalej.test / User123!
 
