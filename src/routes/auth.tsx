@@ -128,10 +128,17 @@ function AuthPage() {
             </TabsContent>
           </Tabs>
         </Card>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Logins de teste: <strong>admin@portalej.test</strong> / Admin123! ·{" "}
-          <strong>user@portalej.test</strong> / User123!
-        </p>
+        <div className="mt-4 rounded-lg border bg-card p-3 text-xs">
+          <div className="mb-1 font-semibold">Logins de teste</div>
+          <ul className="space-y-1 text-muted-foreground">
+            <li><strong>admin@portalej.test</strong> · Admin123! — Administrador</li>
+            <li><strong>user@portalej.test</strong> · User123! — Empresa Júnior Demo</li>
+            <li><strong>rio@portalej.test</strong> · Senha123! — Rio Junior</li>
+            <li><strong>fluxo@portalej.test</strong> · Senha123! — Fluxo Consultoria</li>
+            <li><strong>ejfgv@portalej.test</strong> · Senha123! — EJFGV</li>
+            <li><strong>poli@portalej.test</strong> · Senha123! — Poli Junior</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
