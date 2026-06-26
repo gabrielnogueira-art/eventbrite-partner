@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -17,11 +17,28 @@ export function useIsAdmin() {
   });
 }
 
+export function useCurrentProfile() {
+  return useQuery({
+    queryKey: ["current-profile"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, email, ej_name, ej_slug")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { data: isAdmin } = useIsAdmin();
+  const { data: profile } = useCurrentProfile();
 
   const handleSignOut = async () => {
     await qc.cancelQueries();
@@ -67,7 +84,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavItem to="/admin" icon={Shield} label="Painel Admin" />
             </>
           )}
-          <div className="mt-auto">
+          <div className="mt-auto space-y-2">
+            {profile?.ej_name && (
+              <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
+                <Building2 className="h-4 w-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{profile.ej_name}</div>
+                  <div className="truncate text-muted-foreground">{profile.email}</div>
+                </div>
+              </div>
+            )}
             <button
               onClick={handleSignOut}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-accent hover:text-foreground"
