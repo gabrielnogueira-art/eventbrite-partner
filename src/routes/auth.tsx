@@ -43,7 +43,7 @@ function AuthPage() {
     if (error) {
       console.error("DEBUG LOGIN ERROR:", error);
       const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      // @ts-ignore - access internal supabaseUrl if possible
+      // @ts-expect-error - access internal supabaseUrl if possible
       const url = supabase.supabaseUrl || "unknown url";
       return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
     }
@@ -67,7 +67,7 @@ function AuthPage() {
     if (error) {
       console.error("DEBUG SIGNUP ERROR:", error);
       const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      // @ts-ignore - access internal supabaseUrl if possible
+      // @ts-expect-error - access internal supabaseUrl if possible
       const url = supabase.supabaseUrl || "unknown url";
       return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
     }
