@@ -84,7 +84,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavItem to="/admin" icon={Shield} label="Painel Admin" />
             </>
           )}
-          <div className="mt-auto">
+          <div className="mt-auto space-y-2">
+            {profile?.ej_name && (
+              <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
+                <Building2 className="h-4 w-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{profile.ej_name}</div>
+                  <div className="truncate text-muted-foreground">{profile.email}</div>
+                </div>
+              </div>
+            )}
             <button
               onClick={handleSignOut}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-accent hover:text-foreground"
