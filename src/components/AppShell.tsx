@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -13,6 +13,22 @@ export function useIsAdmin() {
       if (u.user.email === "admin@portalej.test") return true;
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
       return !!data?.some((r) => r.role === "admin");
+    },
+  });
+}
+
+export function useCurrentProfile() {
+  return useQuery({
+    queryKey: ["current-profile"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, email, ej_name, ej_slug")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      return data;
     },
   });
 }
