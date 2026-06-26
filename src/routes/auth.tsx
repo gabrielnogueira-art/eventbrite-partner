@@ -43,7 +43,9 @@ function AuthPage() {
     if (error) {
       console.error("DEBUG LOGIN ERROR:", error);
       const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | Raw: ${rawError}`);
+      // @ts-ignore - access internal supabaseUrl if possible
+      const url = supabase.supabaseUrl || "unknown url";
+      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
     }
     toast.success("Bem-vindo!");
     navigate({ to: "/", replace: true });
