@@ -8,12 +8,22 @@ export function useIsAdmin() {
   return useQuery({
     queryKey: ["is-admin"],
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return false;
-      if (u.user.email === "admin@portalej.test") return true;
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
-      return !!data?.some((r) => r.role === "admin");
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return false;
+        if (u.user.email === "admin@portalej.test") return true;
+        const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+        if (error) {
+          console.error("Erro ao verificar papel do usuário:", error);
+          return false;
+        }
+        return !!data?.some((r) => r.role === "admin");
+      } catch (error) {
+        console.error("Erro ao verificar administrador:", error);
+        return false;
+      }
     },
+    retry: 1,
   });
 }
 
@@ -21,15 +31,25 @@ export function useCurrentProfile() {
   return useQuery({
     queryKey: ["current-profile"],
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, email, ej_name, ej_slug")
-        .eq("id", u.user.id)
-        .maybeSingle();
-      return data;
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return null;
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name, email, ej_name, ej_slug")
+          .eq("id", u.user.id)
+          .maybeSingle();
+        if (error) {
+          console.error("Erro ao carregar perfil:", error);
+          return null;
+        }
+        return data;
+      } catch (error) {
+        console.error("Erro ao carregar perfil atual:", error);
+        return null;
+      }
     },
+    retry: 1,
   });
 }
 

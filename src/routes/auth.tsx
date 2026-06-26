@@ -35,19 +35,22 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: String(fd.get("email")),
-      password: String(fd.get("password")),
-    });
-    setLoading(false);
-    if (error) {
-      console.error("DEBUG LOGIN ERROR:", error);
-      const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      // @ts-expect-error - access internal supabaseUrl if possible
-      const url = supabase.supabaseUrl || "unknown url";
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: String(fd.get("email")),
+        password: String(fd.get("password")),
+      });
+      if (error) {
+        console.error("Erro de login:", error);
+        return toast.error(error.message || "Não foi possível entrar. Confira e tente novamente.");
+      }
+    } catch (error) {
+      console.error("Falha de conexão no login:", error);
       return toast.error(
-        `Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`,
+        "Não foi possível conectar ao backend. Verifique extensões/bloqueadores ou tente em janela anônima.",
       );
+    } finally {
+      setLoading(false);
     }
     toast.success("Bem-vindo!");
     navigate({ to: "/", replace: true });
@@ -57,23 +60,26 @@ function AuthPage() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: String(fd.get("email")),
-      password: String(fd.get("password")),
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: String(fd.get("full_name")) },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      console.error("DEBUG SIGNUP ERROR:", error);
-      const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      // @ts-expect-error - access internal supabaseUrl if possible
-      const url = supabase.supabaseUrl || "unknown url";
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: String(fd.get("email")),
+        password: String(fd.get("password")),
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: String(fd.get("full_name")) },
+        },
+      });
+      if (error) {
+        console.error("Erro ao criar conta:", error);
+        return toast.error(error.message || "Não foi possível criar a conta.");
+      }
+    } catch (error) {
+      console.error("Falha de conexão ao criar conta:", error);
       return toast.error(
-        `Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`,
+        "Não foi possível conectar ao backend. Verifique extensões/bloqueadores ou tente em janela anônima.",
       );
+    } finally {
+      setLoading(false);
     }
     toast.success("Conta criada! Você já pode entrar.");
   };
