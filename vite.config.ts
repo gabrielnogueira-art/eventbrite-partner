@@ -11,10 +11,10 @@ export default defineConfig({
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("https://rpubymahfervlxdmmqfx.supabase.co"),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJwdWJ5bWFoZmVydmx4ZG1tcWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjcwNDUsImV4cCI6MjA5NzQwMzA0NX0.7P7VsYzByHcTi2SOqODNSWmdd7fpeDTjFw8pWpsI_es",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWJ5bWFoZmVydmx4ZG1tcWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjcwNDUsImV4cCI6MjA5NzQwMzA0NX0.7P7VsYzByHcTi2SOqODNSWmdd7fpeDTjFw8pWpsI_es",
       ),
       "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJwdWJ5bWFoZmVydmx4ZG1tcWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjcwNDUsImV4cCI6MjA5NzQwMzA0NX0.7P7VsYzByHcTi2SOqODNSWmdd7fpeDTjFw8pWpsI_es",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWJ5bWFoZmVydmx4ZG1tcWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjcwNDUsImV4cCI6MjA5NzQwMzA0NX0.7P7VsYzByHcTi2SOqODNSWmdd7fpeDTjFw8pWpsI_es",
       ),
       "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify("rpubymahfervlxdmmqfx"),
     },
