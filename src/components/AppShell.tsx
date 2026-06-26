@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { data: isAdmin } = useIsAdmin();
+  const { data: profile } = useCurrentProfile();
 
   const handleSignOut = async () => {
     await qc.cancelQueries();
