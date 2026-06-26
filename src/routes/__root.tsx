@@ -78,11 +78,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:title", content: "Portal RioJunior — Ingressos" },
       { name: "twitter:title", content: "Portal RioJunior — Ingressos" },
-      { name: "description", content: "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales." },
-      { property: "og:description", content: "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales." },
-      { name: "twitter:description", content: "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6273fdd-f5bb-4e1d-8213-acfc4930bbe6/id-preview-2a9d81a1--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1782498313287.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6273fdd-f5bb-4e1d-8213-acfc4930bbe6/id-preview-2a9d81a1--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1782498313287.png" },
+      {
+        name: "description",
+        content:
+          "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales.",
+      },
+      {
+        property: "og:description",
+        content:
+          "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Eventbrite Partner allows junior enterprises to discover and purchase event tickets, with administrators managing event creation and ticket lot sales.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6273fdd-f5bb-4e1d-8213-acfc4930bbe6/id-preview-2a9d81a1--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1782498313287.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6273fdd-f5bb-4e1d-8213-acfc4930bbe6/id-preview-2a9d81a1--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1782498313287.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],

@@ -45,7 +45,9 @@ function AuthPage() {
       const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
       // @ts-expect-error - access internal supabaseUrl if possible
       const url = supabase.supabaseUrl || "unknown url";
-      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
+      return toast.error(
+        `Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`,
+      );
     }
     toast.success("Bem-vindo!");
     navigate({ to: "/", replace: true });
@@ -69,7 +71,9 @@ function AuthPage() {
       const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
       // @ts-expect-error - access internal supabaseUrl if possible
       const url = supabase.supabaseUrl || "unknown url";
-      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
+      return toast.error(
+        `Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`,
+      );
     }
     toast.success("Conta criada! Você já pode entrar.");
   };
@@ -131,12 +135,24 @@ function AuthPage() {
         <div className="mt-4 rounded-lg border bg-card p-3 text-xs">
           <div className="mb-1 font-semibold">Logins de teste</div>
           <ul className="space-y-1 text-muted-foreground">
-            <li><strong>admin@portalej.test</strong> · Admin123! — Administrador</li>
-            <li><strong>user@portalej.test</strong> · User123! — Empresa Júnior Demo</li>
-            <li><strong>rio@portalej.test</strong> · Senha123! — Rio Junior</li>
-            <li><strong>fluxo@portalej.test</strong> · Senha123! — Fluxo Consultoria</li>
-            <li><strong>ejfgv@portalej.test</strong> · Senha123! — EJFGV</li>
-            <li><strong>poli@portalej.test</strong> · Senha123! — Poli Junior</li>
+            <li>
+              <strong>admin@portalej.test</strong> · Admin123! — Administrador
+            </li>
+            <li>
+              <strong>user@portalej.test</strong> · User123! — Empresa Júnior Demo
+            </li>
+            <li>
+              <strong>rio@portalej.test</strong> · Senha123! — Rio Junior
+            </li>
+            <li>
+              <strong>fluxo@portalej.test</strong> · Senha123! — Fluxo Consultoria
+            </li>
+            <li>
+              <strong>ejfgv@portalej.test</strong> · Senha123! — EJFGV
+            </li>
+            <li>
+              <strong>poli@portalej.test</strong> · Senha123! — Poli Junior
+            </li>
           </ul>
         </div>
       </div>
