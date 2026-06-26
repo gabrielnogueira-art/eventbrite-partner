@@ -64,7 +64,13 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("DEBUG SIGNUP ERROR:", error);
+      const rawError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      // @ts-ignore - access internal supabaseUrl if possible
+      const url = supabase.supabaseUrl || "unknown url";
+      return toast.error(`Erro detalhado: ${error.message || "Sem mensagem"} | URL: ${url} | Raw: ${rawError}`);
+    }
     toast.success("Conta criada! Você já pode entrar.");
   };
 
