@@ -36,7 +36,7 @@ export function useCurrentProfile() {
         if (!u.user) return null;
         const { data, error } = await supabase
           .from("profiles")
-          .select("full_name, email, ej_name, ej_slug")
+          .select("full_name, email, ej_name, ej_slug, region")
           .eq("id", u.user.id)
           .maybeSingle();
         if (error) {
