@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, useCurrentProfile } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import { fmtBRL } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Clock, ShieldCheck } from "lucide-react";
+import {
+  ParticipantFields,
+  emptyParticipant,
+  validateCaravan,
+  REGIONS_REQUIRING_CARAVAN,
+  type ParticipantData,
+} from "@/components/ParticipantFields";
 
 export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
   component: CheckoutPage,
@@ -20,7 +27,9 @@ function CheckoutPage() {
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
   const [remaining, setRemaining] = useState<number>(0);
-  const [participants, setParticipants] = useState<{ full_name: string; email: string }[]>([]);
+  const { data: profile } = useCurrentProfile();
+  const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
+  const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [billing, setBilling] = useState({
     doc_type: "cpf",
     doc: "",
@@ -54,7 +63,7 @@ function CheckoutPage() {
     setParticipants((prev) =>
       prev.length === order.quantity
         ? prev
-        : Array.from({ length: order.quantity }, (_, i) => prev[i] ?? { full_name: "", email: "" }),
+        : Array.from({ length: order.quantity }, (_, i) => prev[i] ?? emptyParticipant()),
     );
   }, [order]);
 
@@ -102,6 +111,12 @@ function CheckoutPage() {
     e.preventDefault();
     if (participants.some((p) => !p.full_name || !p.email))
       return toast.error("Preencha todos os participantes");
+    if (requireCaravan) {
+      for (const p of participants) {
+        const err = validateCaravan(p);
+        if (err) return toast.error(`Dados de caravana incompletos: ${p.full_name || "—"}`);
+      }
+    }
     if (
       !billing.doc ||
       !billing.zip ||
@@ -173,34 +188,22 @@ function CheckoutPage() {
               <p className="mb-4 text-sm text-muted-foreground">
                 Preencha os dados como devem aparecer no ingresso.
               </p>
-              <div className="space-y-4">
+              <p className="mb-4 text-sm text-muted-foreground">
+                {requireCaravan
+                  ? `Como sua EJ é da região ${profile?.region?.toUpperCase()}, dados adicionais para articulação de caravana são obrigatórios.`
+                  : "Preencha os dados como devem aparecer no ingresso."}
+              </p>
+              <div className="space-y-6">
                 {participants.map((p, i) => (
-                  <div key={i} className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label>Participante #{i + 1} — Nome</Label>
-                      <Input
-                        value={p.full_name}
-                        onChange={(e) =>
-                          setParticipants((s) =>
-                            s.map((x, j) => (j === i ? { ...x, full_name: e.target.value } : x)),
-                          )
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>E-mail</Label>
-                      <Input
-                        type="email"
-                        value={p.email}
-                        onChange={(e) =>
-                          setParticipants((s) =>
-                            s.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)),
-                          )
-                        }
-                        required
-                      />
-                    </div>
+                  <div key={i} className="rounded-lg border p-4">
+                    <div className="mb-3 text-sm font-semibold">Participante #{i + 1}</div>
+                    <ParticipantFields
+                      value={p}
+                      onChange={(next) =>
+                        setParticipants((s) => s.map((x, j) => (j === i ? next : x)))
+                      }
+                      requireCaravan={requireCaravan}
+                    />
                   </div>
                 ))}
               </div>
