@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle } from "lucide-react";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
   component: AdminEventPage,
 });
 
-const toLocalInput = (iso: string) => {
+const toLocalInput = (iso: string | null | undefined) => {
+  if (!iso) return "";
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -47,14 +49,51 @@ function AdminEventPage() {
       (
         await supabase
           .from("orders")
-          .select("*, order_participants(full_name, email)")
+          .select("*, order_participants(*), ticket_lots(name)")
           .eq("event_id", id)
           .order("created_at", { ascending: false })
       ).data ?? [],
   });
 
+  // Lookup EJ names for participants
+  const ownerIds = Array.from(
+    new Set(
+      orders.flatMap((o: any) =>
+        (o.order_participants ?? []).map((p: any) => p.ej_owner_id).filter(Boolean),
+      ),
+    ),
+  );
+  const { data: ejProfiles = [] } = useQuery({
+    queryKey: ["ej-profiles", ownerIds.sort().join(",")],
+    queryFn: async () => {
+      if (ownerIds.length === 0) return [];
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, ej_name, email")
+        .in("id", ownerIds);
+      return data ?? [];
+    },
+    enabled: ownerIds.length > 0,
+  });
+  const ejMap = new Map(ejProfiles.map((p: any) => [p.id, p]));
+
   const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "" });
   const [editingLot, setEditingLot] = useState<any>(null);
+  const [transferDeadline, setTransferDeadline] = useState("");
+  useEffect(() => {
+    if (event) setTransferDeadline(toLocalInput(event.transfer_deadline));
+  }, [event]);
+
+  const saveTransferDeadline = async () => {
+    const value = transferDeadline ? new Date(transferDeadline).toISOString() : null;
+    const { error } = await supabase
+      .from("events")
+      .update({ transfer_deadline: value })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Prazo de transferência salvo");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
 
   const addLot = async () => {
     if (!newLot.name || !newLot.price || !newLot.total || !newLot.opens || !newLot.closes)
@@ -121,12 +160,61 @@ function AdminEventPage() {
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
   };
 
+  const paidParticipants = orders
+    .filter((o: any) => o.status === "paid")
+    .flatMap((o: any) =>
+      (o.order_participants ?? []).map((p: any) => ({ ...p, _order: o })),
+    );
+
   const deleteEvent = async () => {
-    if (!confirm("Excluir este evento e todos os ingressos/pedidos?")) return;
+    const paidCount = orders.filter((o: any) => o.status === "paid").length;
+    const isPast = event && new Date(event.starts_at) < new Date();
+    if (paidCount > 0 && !isPast) {
+      const msg = `⚠️ ATENÇÃO: este evento ainda não aconteceu e tem ${paidCount} pedido(s) pago(s) (${paidParticipants.length} participante(s)). Excluir cancela todos os ingressos vendidos sem aviso aos compradores.\n\nPara confirmar, digite EXCLUIR no próximo prompt.`;
+      if (!confirm(msg)) return;
+      const typed = prompt('Digite "EXCLUIR" em maiúsculas para confirmar:');
+      if (typed !== "EXCLUIR") return toast.info("Exclusão cancelada");
+    } else if (!confirm("Excluir este evento e todos os ingressos/pedidos?")) {
+      return;
+    }
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Evento excluído");
     navigate({ to: "/admin" });
+  };
+
+  const exportXLSX = () => {
+    if (paidParticipants.length === 0) return toast.info("Nenhum participante pago para exportar");
+    const rows = paidParticipants.map((p: any, idx: number) => {
+      const owner: any = ejMap.get(p.ej_owner_id) ?? {};
+      return {
+        "Nº": idx + 1,
+        Lote: p._order.ticket_lots?.name ?? "",
+        "EJ Titular": owner.ej_name ?? "—",
+        "Email EJ": owner.email ?? "",
+        "Nome Completo": p.full_name,
+        Email: p.email,
+        CPF: p.cpf ?? "",
+        RG: p.rg ?? "",
+        "Órgão Emissor": p.rg_issuer ?? "",
+        "Data Nascimento": p.birth_date ?? "",
+        Telefone: p.phone ?? "",
+        CEP: p.address_zip ?? "",
+        Rua: p.address_street ?? "",
+        Número: p.address_number ?? "",
+        Bairro: p.address_district ?? "",
+        "Contato Emergência": p.emergency_contact_name ?? "",
+        "Telefone Emergência": p.emergency_contact_phone ?? "",
+        Matrícula: p.university_id ?? "",
+        Curso: p.course_name ?? "",
+        "Transferido em": p.transferred_at ? fmtDateTime(p.transferred_at) : "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Participantes");
+    const safe = (event?.title ?? "evento").replace(/[^a-z0-9-_]+/gi, "_");
+    XLSX.writeFile(wb, `participantes_${safe}.xlsx`);
   };
 
   if (!event)
@@ -140,6 +228,8 @@ function AdminEventPage() {
   const revenue = orders
     .filter((o: any) => o.status === "paid")
     .reduce((a: number, o: any) => a + o.total_cents, 0);
+  const isUpcoming = new Date(event.starts_at) > new Date();
+  const dangerDelete = isUpcoming && paidCount > 0;
 
   return (
     <AppShell>
@@ -160,6 +250,21 @@ function AdminEventPage() {
           </Button>
         </div>
 
+        {dangerDelete && (
+          <Card className="flex items-start gap-3 border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div>
+              <div className="font-semibold text-amber-900 dark:text-amber-200">
+                Evento futuro com vendas confirmadas
+              </div>
+              <div className="text-amber-900/80 dark:text-amber-200/80">
+                Este evento tem {paidCount} pedido(s) pago(s) e ainda não aconteceu. A exclusão é
+                permitida apenas com confirmação dupla.
+              </div>
+            </div>
+          </Card>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="p-4">
             <div className="text-xs text-muted-foreground">Pedidos pagos</div>
@@ -174,6 +279,30 @@ function AdminEventPage() {
             <div className="text-2xl font-bold">{event.max_tickets_per_user}</div>
           </Card>
         </div>
+
+        <Card className="p-6">
+          <h2 className="mb-2 text-lg font-semibold">Prazo de transferência de ingressos</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Data limite para que uma EJ possa transferir um ingresso para outra EJ. Se vazio, o
+            limite passa a ser o início do evento.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Limite</Label>
+              <Input
+                type="datetime-local"
+                value={transferDeadline}
+                onChange={(e) => setTransferDeadline(e.target.value)}
+              />
+            </div>
+            <Button onClick={saveTransferDeadline}>Salvar prazo</Button>
+            {transferDeadline && (
+              <Button variant="ghost" onClick={() => setTransferDeadline("")}>
+                Limpar
+              </Button>
+            )}
+          </div>
+        </Card>
 
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>
@@ -329,33 +458,67 @@ function AdminEventPage() {
               Adicionar lote
             </Button>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">
-            Início padrão de evento de exemplo: {toLocalInput(event.starts_at)}
-          </div>
         </Card>
 
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold">Pedidos ({orders.length})</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">
+              Participantes pagos ({paidParticipants.length})
+            </h2>
+            <Button onClick={exportXLSX} disabled={paidParticipants.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar XLSX
+            </Button>
+          </div>
           <div className="space-y-2">
-            {orders.map((o: any) => (
-              <div
-                key={o.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-              >
-                <div>
-                  <div className="font-medium">{o.order_participants?.[0]?.full_name ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {o.order_participants?.[0]?.email}
+            {paidParticipants.map((p: any, i: number) => {
+              const owner: any = ejMap.get(p.ej_owner_id) ?? {};
+              return (
+                <div key={p.id} className="rounded-lg border p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="font-medium">
+                        {i + 1}. {p.full_name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{p.email}</div>
+                    </div>
+                    <div className="text-xs">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                        {owner.ej_name ?? "—"}
+                      </span>
+                      {p.transferred_at && (
+                        <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700">
+                          Transferido
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {(p.cpf || p.phone || p.course_name) && (
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t pt-2 text-xs text-muted-foreground sm:grid-cols-3">
+                      {p.cpf && <div>CPF: {p.cpf}</div>}
+                      {p.rg && <div>RG: {p.rg}</div>}
+                      {p.birth_date && <div>Nasc.: {p.birth_date}</div>}
+                      {p.phone && <div>Tel.: {p.phone}</div>}
+                      {p.course_name && <div>Curso: {p.course_name}</div>}
+                      {p.university_id && <div>Matrícula: {p.university_id}</div>}
+                      {p.emergency_contact_name && (
+                        <div className="sm:col-span-3">
+                          Emergência: {p.emergency_contact_name} ({p.emergency_contact_phone})
+                        </div>
+                      )}
+                      {p.address_street && (
+                        <div className="sm:col-span-3">
+                          End.: {p.address_street}, {p.address_number} — {p.address_district},{" "}
+                          {p.address_zip}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {o.quantity}× · {fmtBRL(o.total_cents)}
-                </div>
-                <span className="rounded-full bg-accent px-2 py-0.5 text-xs">{o.status}</span>
-              </div>
-            ))}
-            {orders.length === 0 && (
-              <div className="text-sm text-muted-foreground">Nenhum pedido ainda.</div>
+              );
+            })}
+            {paidParticipants.length === 0 && (
+              <div className="text-sm text-muted-foreground">Nenhum participante pago ainda.</div>
             )}
           </div>
         </Card>
