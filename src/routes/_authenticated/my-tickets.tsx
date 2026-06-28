@@ -41,33 +41,53 @@ function MyTicketsPage() {
   const { data: profile } = useCurrentProfile();
   const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ["my-orders"],
+  const { data: payload } = useQuery({
+    queryKey: ["my-tickets-grouped"],
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return [];
-      const { data, error } = await supabase
+      if (!u.user) return { groups: [], me: "" };
+      const me = u.user.id;
+
+      // Orders I created
+      const { data: myOrders } = await supabase
         .from("orders")
         .select(
           "*, events(title, starts_at, location_name, transfer_deadline), ticket_lots(name), order_participants(*)",
         )
-        .eq("user_id", u.user.id)
+        .eq("user_id", me)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+
+      // Participants I currently own (incl. transferred to me from other EJs)
+      const { data: ownedParts } = await supabase
+        .from("order_participants")
+        .select("*, orders!inner(*, events(title, starts_at, location_name, transfer_deadline), ticket_lots(name))")
+        .eq("ej_owner_id", me);
+
+      const ordersMap = new Map<string, any>();
+      for (const o of myOrders ?? []) ordersMap.set(o.id, { ...o, _participants: o.order_participants ?? [] });
+      for (const p of ownedParts ?? []) {
+        const o: any = p.orders;
+        if (!ordersMap.has(o.id)) {
+          ordersMap.set(o.id, { ...o, _participants: [] });
+        }
+        const grp = ordersMap.get(o.id)!;
+        // Replace participant if already present to ensure latest data
+        const idx = grp._participants.findIndex((x: any) => x.id === p.id);
+        const clean = { ...p, orders: undefined };
+        if (idx === -1) grp._participants.push(clean);
+        else grp._participants[idx] = clean;
+      }
+      return { groups: Array.from(ordersMap.values()), me };
     },
   });
 
-  const [editing, setEditing] = useState<{
-    participant: ParticipantData & { id: string };
-    eventStartsAt: string;
-    transferDeadline: string | null;
-  } | null>(null);
-  const [transferring, setTransferring] = useState<{
-    id: string;
-    eventStartsAt: string;
-    transferDeadline: string | null;
-  } | null>(null);
+  const groups: any[] = payload?.groups ?? [];
+  const me = payload?.me ?? "";
+
+  const [editing, setEditing] = useState<{ participant: ParticipantData & { id: string } } | null>(
+    null,
+  );
+  const [transferring, setTransferring] = useState<{ id: string } | null>(null);
   const [transferEmail, setTransferEmail] = useState("");
 
   const canTransfer = (deadline: string | null, starts: string) => {
@@ -89,7 +109,7 @@ function MyTicketsPage() {
     if (error) return toast.error(error.message);
     toast.success("Dados atualizados");
     setEditing(null);
-    qc.invalidateQueries({ queryKey: ["my-orders"] });
+    qc.invalidateQueries({ queryKey: ["my-tickets-grouped"] });
   };
 
   const doTransfer = async () => {
@@ -102,7 +122,7 @@ function MyTicketsPage() {
     toast.success("Ingresso transferido");
     setTransferring(null);
     setTransferEmail("");
-    qc.invalidateQueries({ queryKey: ["my-orders"] });
+    qc.invalidateQueries({ queryKey: ["my-tickets-grouped"] });
   };
 
   return (
@@ -113,13 +133,13 @@ function MyTicketsPage() {
           Edite os dados de um participante ou transfira a titularidade para outra EJ até o prazo
           definido pelo organizador.
         </p>
-        {orders.length === 0 ? (
+        {groups.length === 0 ? (
           <Card className="p-10 text-center text-sm text-muted-foreground">
-            Você ainda não comprou nenhum ingresso.
+            Você ainda não possui ingressos.
           </Card>
         ) : (
           <div className="space-y-4">
-            {orders.map((o: any) => {
+            {groups.map((o: any) => {
               const s = statusLabel[o.status] ?? statusLabel.pending;
               const transferable = canTransfer(
                 o.events?.transfer_deadline ?? null,
@@ -146,61 +166,54 @@ function MyTicketsPage() {
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <div>
-                      <span className="font-medium">{o.ticket_lots?.name}</span> · {o.quantity}{" "}
-                      ingresso(s)
+                      <span className="font-medium">{o.ticket_lots?.name}</span> ·{" "}
+                      {o._participants.length} de {o.quantity} ingresso(s) sob minha titularidade
                     </div>
-                    <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
+                    {o.user_id === me && (
+                      <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
+                    )}
                   </div>
-                  {o.order_participants?.length > 0 && (
+                  {o._participants.length > 0 && (
                     <div className="mt-3 space-y-2 border-t pt-3">
-                      {o.order_participants.map((p: any) => (
-                        <div
-                          key={p.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-xs"
-                        >
-                          <div>
-                            <div className="font-medium text-foreground">{p.full_name}</div>
-                            <div className="text-muted-foreground">{p.email}</div>
-                            {p.transferred_at && (
-                              <div className="mt-0.5 text-[10px] uppercase tracking-wider text-primary">
-                                Transferido em {fmtDateTime(p.transferred_at)}
+                      {o._participants.map((p: any) => {
+                        const mine = p.ej_owner_id === me;
+                        return (
+                          <div
+                            key={p.id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-xs"
+                          >
+                            <div>
+                              <div className="font-medium text-foreground">{p.full_name}</div>
+                              <div className="text-muted-foreground">{p.email}</div>
+                              {p.transferred_at && (
+                                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-primary">
+                                  Transferido em {fmtDateTime(p.transferred_at)}
+                                </div>
+                              )}
+                            </div>
+                            {mine && o.status === "paid" && transferable && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditing({ participant: p })}
+                                >
+                                  <Pencil className="mr-1 h-3 w-3" />
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setTransferring({ id: p.id })}
+                                >
+                                  <ArrowRightLeft className="mr-1 h-3 w-3" />
+                                  Transferir
+                                </Button>
                               </div>
                             )}
                           </div>
-                          {o.status === "paid" && transferable && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  setEditing({
-                                    participant: p,
-                                    eventStartsAt: o.events.starts_at,
-                                    transferDeadline: o.events.transfer_deadline,
-                                  })
-                                }
-                              >
-                                <Pencil className="mr-1 h-3 w-3" />
-                                Editar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  setTransferring({
-                                    id: p.id,
-                                    eventStartsAt: o.events.starts_at,
-                                    transferDeadline: o.events.transfer_deadline,
-                                  })
-                                }
-                              >
-                                <ArrowRightLeft className="mr-1 h-3 w-3" />
-                                Transferir
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                       {o.status === "paid" && !transferable && (
                         <div className="text-xs text-muted-foreground">
                           Prazo para alterações/transferência encerrado.
@@ -227,7 +240,7 @@ function MyTicketsPage() {
             <ParticipantFields
               value={editing.participant}
               onChange={(next) =>
-                setEditing({ ...editing, participant: { ...next, id: editing.participant.id } })
+                setEditing({ participant: { ...next, id: editing.participant.id } })
               }
               requireCaravan={requireCaravan}
             />
