@@ -63,7 +63,7 @@ function CheckoutPage() {
     setParticipants((prev) =>
       prev.length === order.quantity
         ? prev
-        : Array.from({ length: order.quantity }, (_, i) => prev[i] ?? { full_name: "", email: "" }),
+        : Array.from({ length: order.quantity }, (_, i) => prev[i] ?? emptyParticipant()),
     );
   }, [order]);
 
