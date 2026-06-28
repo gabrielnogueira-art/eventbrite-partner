@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, useCurrentProfile } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import { fmtBRL } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Clock, ShieldCheck } from "lucide-react";
+import {
+  ParticipantFields,
+  emptyParticipant,
+  validateCaravan,
+  REGIONS_REQUIRING_CARAVAN,
+  type ParticipantData,
+} from "@/components/ParticipantFields";
 
 export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
   component: CheckoutPage,
