@@ -30,6 +30,7 @@ export type Database = {
           organizer: string
           starts_at: string
           title: string
+          transfer_deadline: string | null
         }
         Insert: {
           address?: string | null
@@ -46,6 +47,7 @@ export type Database = {
           organizer: string
           starts_at: string
           title: string
+          transfer_deadline?: string | null
         }
         Update: {
           address?: string | null
@@ -62,30 +64,79 @@ export type Database = {
           organizer?: string
           starts_at?: string
           title?: string
+          transfer_deadline?: string | null
         }
         Relationships: []
       }
       order_participants: {
         Row: {
+          address_district: string | null
+          address_number: string | null
+          address_street: string | null
+          address_zip: string | null
+          birth_date: string | null
+          course_name: string | null
+          cpf: string | null
           created_at: string
+          ej_owner_id: string | null
           email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string
           id: string
           order_id: string
+          phone: string | null
+          rg: string | null
+          rg_issuer: string | null
+          transferred_at: string | null
+          transferred_from_ej_id: string | null
+          university_id: string | null
         }
         Insert: {
+          address_district?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          birth_date?: string | null
+          course_name?: string | null
+          cpf?: string | null
           created_at?: string
+          ej_owner_id?: string | null
           email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name: string
           id?: string
           order_id: string
+          phone?: string | null
+          rg?: string | null
+          rg_issuer?: string | null
+          transferred_at?: string | null
+          transferred_from_ej_id?: string | null
+          university_id?: string | null
         }
         Update: {
+          address_district?: string | null
+          address_number?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          birth_date?: string | null
+          course_name?: string | null
+          cpf?: string | null
           created_at?: string
+          ej_owner_id?: string | null
           email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string
           id?: string
           order_id?: string
+          phone?: string | null
+          rg?: string | null
+          rg_issuer?: string | null
+          transferred_at?: string | null
+          transferred_from_ej_id?: string | null
+          university_id?: string | null
         }
         Relationships: [
           {
@@ -192,6 +243,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          region: string | null
         }
         Insert: {
           created_at?: string
@@ -200,6 +252,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          region?: string | null
         }
         Update: {
           created_at?: string
@@ -208,6 +261,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          region?: string | null
         }
         Relationships: []
       }
@@ -301,6 +355,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      transfer_participant: {
+        Args: { _participant_id: string; _target_email: string }
+        Returns: undefined
       }
     }
     Enums: {
