@@ -111,6 +111,12 @@ function CheckoutPage() {
     e.preventDefault();
     if (participants.some((p) => !p.full_name || !p.email))
       return toast.error("Preencha todos os participantes");
+    if (requireCaravan) {
+      for (const p of participants) {
+        const err = validateCaravan(p);
+        if (err) return toast.error(`Dados de caravana incompletos: ${p.full_name || "—"}`);
+      }
+    }
     if (
       !billing.doc ||
       !billing.zip ||
