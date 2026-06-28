@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
           <NavItem to="/" icon={Calendar} label="Eventos" />
-          <NavItem to="/my-tickets" icon={Ticket} label="Meus Ingressos" />
+          {!isAdmin && <NavItem to="/my-tickets" icon={Ticket} label="Meus Ingressos" />}
           {isAdmin && (
             <>
               <div className="mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
