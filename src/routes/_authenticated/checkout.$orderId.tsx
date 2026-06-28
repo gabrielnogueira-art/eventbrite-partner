@@ -188,34 +188,22 @@ function CheckoutPage() {
               <p className="mb-4 text-sm text-muted-foreground">
                 Preencha os dados como devem aparecer no ingresso.
               </p>
-              <div className="space-y-4">
+              <p className="mb-4 text-sm text-muted-foreground">
+                {requireCaravan
+                  ? `Como sua EJ é da região ${profile?.region?.toUpperCase()}, dados adicionais para articulação de caravana são obrigatórios.`
+                  : "Preencha os dados como devem aparecer no ingresso."}
+              </p>
+              <div className="space-y-6">
                 {participants.map((p, i) => (
-                  <div key={i} className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label>Participante #{i + 1} — Nome</Label>
-                      <Input
-                        value={p.full_name}
-                        onChange={(e) =>
-                          setParticipants((s) =>
-                            s.map((x, j) => (j === i ? { ...x, full_name: e.target.value } : x)),
-                          )
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>E-mail</Label>
-                      <Input
-                        type="email"
-                        value={p.email}
-                        onChange={(e) =>
-                          setParticipants((s) =>
-                            s.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)),
-                          )
-                        }
-                        required
-                      />
-                    </div>
+                  <div key={i} className="rounded-lg border p-4">
+                    <div className="mb-3 text-sm font-semibold">Participante #{i + 1}</div>
+                    <ParticipantFields
+                      value={p}
+                      onChange={(next) =>
+                        setParticipants((s) => s.map((x, j) => (j === i ? next : x)))
+                      }
+                      requireCaravan={requireCaravan}
+                    />
                   </div>
                 ))}
               </div>
