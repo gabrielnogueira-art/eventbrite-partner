@@ -387,12 +387,17 @@ export type Database = {
         Args: { _lot_id: string; _quantity: number }
         Returns: string
       }
+      fail_order_by_admin: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      refund_order_by_admin: {
+        Args: { _order_id: string; _paddle_tx?: string }
+        Returns: undefined
       }
       transfer_participant: {
         Args: { _participant_id: string; _target_email: string }
@@ -401,7 +406,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      order_status: "pending" | "paid" | "expired" | "cancelled"
+      order_status:
+        | "pending"
+        | "paid"
+        | "expired"
+        | "cancelled"
+        | "failed"
+        | "refunded"
       payment_method: "pix" | "credit_card"
     }
     CompositeTypes: {
@@ -531,7 +542,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      order_status: ["pending", "paid", "expired", "cancelled"],
+      order_status: [
+        "pending",
+        "paid",
+        "expired",
+        "cancelled",
+        "failed",
+        "refunded",
+      ],
       payment_method: ["pix", "credit_card"],
     },
   },
