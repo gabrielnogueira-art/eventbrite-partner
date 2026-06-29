@@ -133,9 +133,15 @@ function CheckoutPage() {
     setBusy(true);
 
     await supabase.from("order_participants").delete().eq("order_id", orderId);
-    const { error: pErr } = await supabase
-      .from("order_participants")
-      .insert(participants.map((p) => ({ ...p, order_id: orderId })));
+    const sanitized = participants.map((p) => {
+      const row: any = { ...p, order_id: orderId };
+      // Convert empty strings to null so Postgres date/optional cols accept them
+      for (const k of Object.keys(row)) {
+        if (row[k] === "") row[k] = null;
+      }
+      return row;
+    });
+    const { error: pErr } = await supabase.from("order_participants").insert(sanitized);
     if (pErr) {
       setBusy(false);
       return toast.error(pErr.message);
