@@ -331,32 +331,14 @@ function CheckoutPage() {
               <div className="mb-1 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 Pagamento
               </div>
-              <h2 className="text-lg font-semibold">Escolha como deseja pagar</h2>
-              <RadioGroup
-                value={method}
-                onValueChange={(v) => setMethod(v as "pix" | "credit_card")}
-                className="mt-4 space-y-3"
-              >
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 ${method === "pix" ? "border-primary bg-primary/5" : ""}`}
-                >
-                  <RadioGroupItem value="pix" />
-                  <div>
-                    <div className="font-medium">PIX</div>
-                    <div className="text-xs text-muted-foreground">Aprovação imediata</div>
-                  </div>
-                </label>
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 ${method === "credit_card" ? "border-primary bg-primary/5" : ""}`}
-                >
-                  <RadioGroupItem value="credit_card" />
-                  <div>
-                    <div className="font-medium">Cartão de crédito</div>
-                    <div className="text-xs text-muted-foreground">Em até 12x</div>
-                  </div>
-                </label>
-              </RadioGroup>
+              <h2 className="text-lg font-semibold">Pagamento seguro</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Ao finalizar, abriremos a tela de pagamento (cartão de crédito ou PIX) em modo
+                de teste. Use o cartão <strong>4242 4242 4242 4242</strong>, qualquer CVC e
+                validade futura para simular a compra.
+              </p>
             </Card>
+
 
             <Card className="flex items-center justify-between p-4">
               <div className="text-sm text-muted-foreground">
