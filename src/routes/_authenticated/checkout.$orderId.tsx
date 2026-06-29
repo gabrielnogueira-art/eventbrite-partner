@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, useCurrentProfile } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { fmtBRL } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Clock, ShieldCheck } from "lucide-react";
+import { initializePaddle, getPaddleEnvironment } from "@/lib/paddle";
+import { createPaddleTransaction } from "@/lib/payments.functions";
 import {
   ParticipantFields,
   emptyParticipant,
@@ -26,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
 function CheckoutPage() {
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
+  const createTx = useServerFn(createPaddleTransaction);
   const [remaining, setRemaining] = useState<number>(0);
   const { data: profile } = useCurrentProfile();
   const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
@@ -42,8 +46,8 @@ function CheckoutPage() {
     city: "",
     complement: "",
   });
-  const [method, setMethod] = useState<"pix" | "credit_card">("pix");
   const [busy, setBusy] = useState(false);
+
 
   const { data: order } = useQuery({
     queryKey: ["order", orderId],
@@ -150,19 +154,39 @@ function CheckoutPage() {
         billing_state: billing.state,
         billing_city: billing.city,
         billing_complement: billing.complement,
-        payment_method: method,
       })
       .eq("id", orderId);
 
-    const { error } = await supabase.rpc("confirm_payment", {
-      _order_id: orderId,
-      _method: method,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Pagamento confirmado!");
-    navigate({ to: "/my-tickets" });
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const environment = getPaddleEnvironment();
+      const { transactionId } = await createTx({
+        data: { orderId, environment },
+      });
+      await initializePaddle();
+      window.Paddle.Checkout.open({
+        transactionId,
+        customer: u.user?.email ? { email: u.user.email } : undefined,
+        settings: {
+          displayMode: "overlay",
+          successUrl: `${window.location.origin}/my-tickets`,
+          allowLogout: false,
+          variant: "one-page",
+        },
+        eventCallback: (evt: any) => {
+          if (evt?.name === "checkout.completed") {
+            toast.success("Pagamento confirmado! Atualizando seus ingressos...");
+            setTimeout(() => navigate({ to: "/my-tickets" }), 2500);
+          }
+        },
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao iniciar o pagamento");
+    } finally {
+      setBusy(false);
+    }
   };
+
 
   return (
     <AppShell>
@@ -307,32 +331,14 @@ function CheckoutPage() {
               <div className="mb-1 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 Pagamento
               </div>
-              <h2 className="text-lg font-semibold">Escolha como deseja pagar</h2>
-              <RadioGroup
-                value={method}
-                onValueChange={(v) => setMethod(v as "pix" | "credit_card")}
-                className="mt-4 space-y-3"
-              >
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 ${method === "pix" ? "border-primary bg-primary/5" : ""}`}
-                >
-                  <RadioGroupItem value="pix" />
-                  <div>
-                    <div className="font-medium">PIX</div>
-                    <div className="text-xs text-muted-foreground">Aprovação imediata</div>
-                  </div>
-                </label>
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 ${method === "credit_card" ? "border-primary bg-primary/5" : ""}`}
-                >
-                  <RadioGroupItem value="credit_card" />
-                  <div>
-                    <div className="font-medium">Cartão de crédito</div>
-                    <div className="text-xs text-muted-foreground">Em até 12x</div>
-                  </div>
-                </label>
-              </RadioGroup>
+              <h2 className="text-lg font-semibold">Pagamento seguro</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Ao finalizar, abriremos a tela de pagamento (cartão de crédito ou PIX) em modo
+                de teste. Use o cartão <strong>4242 4242 4242 4242</strong>, qualquer CVC e
+                validade futura para simular a compra.
+              </p>
             </Card>
+
 
             <Card className="flex items-center justify-between p-4">
               <div className="text-sm text-muted-foreground">

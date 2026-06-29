@@ -191,6 +191,7 @@ export type Database = {
           event_id: string
           id: string
           lot_id: string
+          paddle_transaction_id: string | null
           paid_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           quantity: number
@@ -214,6 +215,7 @@ export type Database = {
           event_id: string
           id?: string
           lot_id: string
+          paddle_transaction_id?: string | null
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           quantity: number
@@ -237,6 +239,7 @@ export type Database = {
           event_id?: string
           id?: string
           lot_id?: string
+          paddle_transaction_id?: string | null
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           quantity?: number
@@ -369,6 +372,14 @@ export type Database = {
         Args: {
           _method: Database["public"]["Enums"]["payment_method"]
           _order_id: string
+        }
+        Returns: undefined
+      }
+      confirm_payment_by_admin: {
+        Args: {
+          _method: Database["public"]["Enums"]["payment_method"]
+          _order_id: string
+          _paddle_tx: string
         }
         Returns: undefined
       }
