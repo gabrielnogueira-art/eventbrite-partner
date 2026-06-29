@@ -3,6 +3,8 @@ import { Calendar, Ticket, Shield, LogOut, Home, Building2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+
 
 export function useIsAdmin() {
   return useQuery({
@@ -125,8 +127,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
         </nav>
-      </aside>
-      <main className="flex-1 overflow-x-hidden">{children}</main>
+        </aside>
+        <main className="flex-1 overflow-x-hidden">{children}</main>
+      </div>
     </div>
   );
 }
+
