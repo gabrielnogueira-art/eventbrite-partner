@@ -21,7 +21,7 @@ async function handleTransactionCompleted(data: any) {
   }
   const method =
     data.payments?.[0]?.methodDetails?.type === "card" ? "credit_card" : "pix";
-  const { error } = await getSupabase().rpc("confirm_payment_by_admin", {
+  const { error } = await (getSupabase() as any).rpc("confirm_payment_by_admin", {
     _order_id: orderId,
     _method: method,
     _paddle_tx: data.id,
