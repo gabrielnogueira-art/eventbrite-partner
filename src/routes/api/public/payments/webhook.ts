@@ -29,11 +29,54 @@ async function handleTransactionCompleted(data: any) {
   if (error) console.error("confirm_payment_by_admin error", error);
 }
 
+async function handleTransactionFailed(data: any) {
+  const orderId = data.customData?.orderId;
+  if (!orderId) {
+    console.warn("transaction.payment_failed sem customData.orderId", data.id);
+    return;
+  }
+  const { error } = await (getSupabase() as any).rpc("fail_order_by_admin", {
+    _order_id: orderId,
+  });
+  if (error) console.error("fail_order_by_admin error", error);
+}
+
+async function handleAdjustment(data: any) {
+  // Only act on full or partial refunds that are approved/pending_approval
+  if (data.action !== "refund") return;
+  if (!["approved", "pending_approval"].includes(data.status)) return;
+
+  const txId = data.transactionId;
+  if (!txId) return;
+  const sb = getSupabase() as any;
+  const { data: order, error } = await sb
+    .from("orders")
+    .select("id")
+    .eq("paddle_transaction_id", txId)
+    .maybeSingle();
+  if (error || !order) {
+    console.warn("adjustment: pedido não encontrado para tx", txId);
+    return;
+  }
+  const { error: rErr } = await sb.rpc("refund_order_by_admin", {
+    _order_id: order.id,
+    _paddle_tx: txId,
+  });
+  if (rErr) console.error("refund_order_by_admin error", rErr);
+}
+
 async function handleWebhook(req: Request, env: PaddleEnv) {
   const event = await verifyWebhook(req, env);
   switch (event.eventType) {
     case EventName.TransactionCompleted:
       await handleTransactionCompleted(event.data);
+      break;
+    case EventName.TransactionPaymentFailed:
+      await handleTransactionFailed(event.data);
+      break;
+    case EventName.AdjustmentCreated:
+    case EventName.AdjustmentUpdated:
+      await handleAdjustment(event.data);
       break;
     default:
       console.log("Unhandled event:", event.eventType);
