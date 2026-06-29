@@ -190,7 +190,7 @@ function CheckoutPage() {
               </p>
               <p className="mb-4 text-sm text-muted-foreground">
                 {requireCaravan
-                  ? `Como sua EJ é da região ${profile?.region?.toUpperCase()}, dados adicionais para articulação de caravana são obrigatórios.`
+                  ? `Sua EJ é da região ${profile?.region?.toUpperCase()}. Marque a caixa em cada participante interessado na caravana para liberar os campos adicionais.`
                   : "Preencha os dados como devem aparecer no ingresso."}
               </p>
               <div className="space-y-6">
