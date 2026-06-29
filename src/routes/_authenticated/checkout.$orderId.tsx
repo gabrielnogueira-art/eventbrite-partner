@@ -154,19 +154,39 @@ function CheckoutPage() {
         billing_state: billing.state,
         billing_city: billing.city,
         billing_complement: billing.complement,
-        payment_method: method,
       })
       .eq("id", orderId);
 
-    const { error } = await supabase.rpc("confirm_payment", {
-      _order_id: orderId,
-      _method: method,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Pagamento confirmado!");
-    navigate({ to: "/my-tickets" });
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const environment = getPaddleEnvironment();
+      const { transactionId } = await createTx({
+        data: { orderId, environment },
+      });
+      await initializePaddle();
+      window.Paddle.Checkout.open({
+        transactionId,
+        customer: u.user?.email ? { email: u.user.email } : undefined,
+        settings: {
+          displayMode: "overlay",
+          successUrl: `${window.location.origin}/my-tickets`,
+          allowLogout: false,
+          variant: "one-page",
+        },
+        eventCallback: (evt: any) => {
+          if (evt?.name === "checkout.completed") {
+            toast.success("Pagamento confirmado! Atualizando seus ingressos...");
+            setTimeout(() => navigate({ to: "/my-tickets" }), 2500);
+          }
+        },
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao iniciar o pagamento");
+    } finally {
+      setBusy(false);
+    }
   };
+
 
   return (
     <AppShell>
