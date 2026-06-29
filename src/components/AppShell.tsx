@@ -85,8 +85,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 border-r bg-sidebar md:flex md:flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
+      <PaymentTestModeBanner />
+      <div className="flex flex-1">
+        <aside className="hidden w-64 shrink-0 border-r bg-sidebar md:flex md:flex-col">
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             P
