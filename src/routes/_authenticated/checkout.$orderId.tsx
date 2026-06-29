@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, useCurrentProfile } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { fmtBRL } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Clock, ShieldCheck } from "lucide-react";
+import { initializePaddle, getPaddleEnvironment } from "@/lib/paddle";
+import { createPaddleTransaction } from "@/lib/payments.functions";
 import {
   ParticipantFields,
   emptyParticipant,
@@ -26,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
 function CheckoutPage() {
   const { orderId } = Route.useParams();
   const navigate = useNavigate();
+  const createTx = useServerFn(createPaddleTransaction);
   const [remaining, setRemaining] = useState<number>(0);
   const { data: profile } = useCurrentProfile();
   const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
@@ -42,8 +46,8 @@ function CheckoutPage() {
     city: "",
     complement: "",
   });
-  const [method, setMethod] = useState<"pix" | "credit_card">("pix");
   const [busy, setBusy] = useState(false);
+
 
   const { data: order } = useQuery({
     queryKey: ["order", orderId],
