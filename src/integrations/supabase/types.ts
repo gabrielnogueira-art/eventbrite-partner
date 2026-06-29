@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ej_directory: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          region: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          region: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          region?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           address: string | null
@@ -91,6 +115,7 @@ export type Database = {
           transferred_at: string | null
           transferred_from_ej_id: string | null
           university_id: string | null
+          wants_caravan: boolean
         }
         Insert: {
           address_district?: string | null
@@ -114,6 +139,7 @@ export type Database = {
           transferred_at?: string | null
           transferred_from_ej_id?: string | null
           university_id?: string | null
+          wants_caravan?: boolean
         }
         Update: {
           address_district?: string | null
@@ -137,6 +163,7 @@ export type Database = {
           transferred_at?: string | null
           transferred_from_ej_id?: string | null
           university_id?: string | null
+          wants_caravan?: boolean
         }
         Relationships: [
           {
