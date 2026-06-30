@@ -176,6 +176,27 @@ function MyTicketsPage() {
                       <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
                     )}
                   </div>
+                  {o.status === "paid" && o.redemption_link && o.user_id === me && (
+                    <a
+                      href={o.redemption_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                    >
+                      <ExternalLink className="h-4 w-4" /> Acessar link de resgate
+                    </a>
+                  )}
+                  {o.status === "awaiting_review" && o.user_id === me && (
+                    <div className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3 text-xs text-blue-800">
+                      Comprovante enviado. Aguarde a confirmação do admin para liberar o link de
+                      resgate.
+                    </div>
+                  )}
+                  {o.status === "pending" && o.admin_notes && o.user_id === me && (
+                    <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                      <strong>Comprovante rejeitado:</strong> {o.admin_notes}
+                    </div>
+                  )}
                   {o._participants.length > 0 && (
                     <div className="mt-3 space-y-2 border-t pt-3">
                       {o._participants.map((p: any) => {
