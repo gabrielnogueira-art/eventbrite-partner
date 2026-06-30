@@ -17,7 +17,7 @@ import {
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil, ArrowRightLeft } from "lucide-react";
+import { Pencil, ArrowRightLeft, ExternalLink } from "lucide-react";
 import {
   ParticipantFields,
   REGIONS_REQUIRING_CARAVAN,
@@ -31,9 +31,12 @@ export const Route = createFileRoute("/_authenticated/my-tickets")({
 
 const statusLabel: Record<string, { label: string; cls: string }> = {
   paid: { label: "Pago", cls: "bg-success/15 text-success" },
-  pending: { label: "Pagamento pendente", cls: "bg-amber-500/15 text-amber-700" },
+  pending: { label: "Aguardando pagamento", cls: "bg-amber-500/15 text-amber-700" },
+  awaiting_review: { label: "Comprovante em análise", cls: "bg-blue-500/15 text-blue-700" },
   expired: { label: "Expirado", cls: "bg-muted text-muted-foreground" },
   cancelled: { label: "Cancelado", cls: "bg-destructive/10 text-destructive" },
+  failed: { label: "Pagamento falhou", cls: "bg-destructive/10 text-destructive" },
+  refunded: { label: "Reembolsado", cls: "bg-muted text-muted-foreground" },
 };
 
 function MyTicketsPage() {
