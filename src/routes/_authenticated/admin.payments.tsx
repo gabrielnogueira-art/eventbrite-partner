@@ -91,7 +91,7 @@ function AdminPaymentsPage() {
     const { error } = await supabase.rpc("approve_order_by_admin", {
       _order_id: approving.id,
       _redemption_link: redemptionLink.trim(),
-      _notes: adminNotes.trim() || null,
+      _notes: adminNotes.trim() || undefined,
     });
     if (error) return toast.error(error.message);
     toast.success("Pagamento aprovado e link liberado");
