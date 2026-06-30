@@ -57,6 +57,21 @@ function AdminHome() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl p-6 lg:p-10">
+        {pendingCount > 0 && (
+          <Link to="/admin/payments">
+            <Card className="mb-4 flex items-center justify-between border-amber-500/40 bg-amber-500/10 p-4 transition hover:bg-amber-500/15">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-amber-700">
+                  Pagamentos aguardando análise
+                </div>
+                <div className="text-sm">
+                  Há <strong>{pendingCount}</strong> comprovante(s) aguardando aprovação.
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-amber-800">Revisar →</div>
+            </Card>
+          </Link>
+        )}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-primary">
