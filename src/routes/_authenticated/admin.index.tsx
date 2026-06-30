@@ -34,6 +34,19 @@ function AdminHome() {
     enabled: !!isAdmin,
   });
 
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["admin-pending-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "awaiting_review");
+      return count ?? 0;
+    },
+    enabled: !!isAdmin,
+    refetchInterval: 30000,
+  });
+
   if (!isAdmin)
     return (
       <AppShell>
