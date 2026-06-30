@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: number
+          pix_instructions: string | null
+          pix_key: string | null
+          pix_key_type: string | null
+          pix_qr_url: string | null
+          pix_recipient_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          pix_instructions?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          pix_qr_url?: string | null
+          pix_recipient_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          pix_instructions?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
+          pix_qr_url?: string | null
+          pix_recipient_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ej_directory: {
         Row: {
           created_at: string
@@ -177,6 +207,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
           billing_city: string | null
           billing_complement: string | null
           billing_district: string | null
@@ -194,13 +227,19 @@ export type Database = {
           paddle_transaction_id: string | null
           paid_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_proof_submitted_at: string | null
+          payment_proof_url: string | null
           quantity: number
+          redemption_link: string | null
           reserved_until: string
           status: Database["public"]["Enums"]["order_status"]
           total_cents: number
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           billing_city?: string | null
           billing_complement?: string | null
           billing_district?: string | null
@@ -218,13 +257,19 @@ export type Database = {
           paddle_transaction_id?: string | null
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_proof_submitted_at?: string | null
+          payment_proof_url?: string | null
           quantity: number
+          redemption_link?: string | null
           reserved_until: string
           status?: Database["public"]["Enums"]["order_status"]
           total_cents: number
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           billing_city?: string | null
           billing_complement?: string | null
           billing_district?: string | null
@@ -242,7 +287,10 @@ export type Database = {
           paddle_transaction_id?: string | null
           paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_proof_submitted_at?: string | null
+          payment_proof_url?: string | null
           quantity?: number
+          redemption_link?: string | null
           reserved_until?: string
           status?: Database["public"]["Enums"]["order_status"]
           total_cents?: number
@@ -368,6 +416,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_order_by_admin: {
+        Args: { _notes?: string; _order_id: string; _redemption_link: string }
+        Returns: undefined
+      }
       confirm_payment: {
         Args: {
           _method: Database["public"]["Enums"]["payment_method"]
@@ -399,6 +451,14 @@ export type Database = {
         Args: { _order_id: string; _paddle_tx?: string }
         Returns: undefined
       }
+      reject_payment_proof: {
+        Args: { _notes: string; _order_id: string }
+        Returns: undefined
+      }
+      submit_payment_proof: {
+        Args: { _order_id: string; _proof_url: string }
+        Returns: undefined
+      }
       transfer_participant: {
         Args: { _participant_id: string; _target_email: string }
         Returns: undefined
@@ -413,6 +473,7 @@ export type Database = {
         | "cancelled"
         | "failed"
         | "refunded"
+        | "awaiting_review"
       payment_method: "pix" | "credit_card"
     }
     CompositeTypes: {
@@ -549,6 +610,7 @@ export const Constants = {
         "cancelled",
         "failed",
         "refunded",
+        "awaiting_review",
       ],
       payment_method: ["pix", "credit_card"],
     },
