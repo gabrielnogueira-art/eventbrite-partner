@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home, Building2 } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -105,7 +105,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Admin
               </div>
-              <NavItem to="/admin" icon={Shield} label="Painel Admin" />
+              <NavItem to="/admin" icon={Shield} label="Eventos" />
+              <NavItem to="/admin/payments" icon={Receipt} label="Pagamentos" />
+              <NavItem to="/admin/settings" icon={Settings} label="Configurações PIX" />
             </>
           )}
           <div className="mt-auto space-y-2">

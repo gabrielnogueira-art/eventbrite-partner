@@ -17,7 +17,7 @@ import {
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil, ArrowRightLeft } from "lucide-react";
+import { Pencil, ArrowRightLeft, ExternalLink } from "lucide-react";
 import {
   ParticipantFields,
   REGIONS_REQUIRING_CARAVAN,
@@ -31,9 +31,12 @@ export const Route = createFileRoute("/_authenticated/my-tickets")({
 
 const statusLabel: Record<string, { label: string; cls: string }> = {
   paid: { label: "Pago", cls: "bg-success/15 text-success" },
-  pending: { label: "Pagamento pendente", cls: "bg-amber-500/15 text-amber-700" },
+  pending: { label: "Aguardando pagamento", cls: "bg-amber-500/15 text-amber-700" },
+  awaiting_review: { label: "Comprovante em análise", cls: "bg-blue-500/15 text-blue-700" },
   expired: { label: "Expirado", cls: "bg-muted text-muted-foreground" },
   cancelled: { label: "Cancelado", cls: "bg-destructive/10 text-destructive" },
+  failed: { label: "Pagamento falhou", cls: "bg-destructive/10 text-destructive" },
+  refunded: { label: "Reembolsado", cls: "bg-muted text-muted-foreground" },
 };
 
 function MyTicketsPage() {
@@ -173,6 +176,27 @@ function MyTicketsPage() {
                       <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
                     )}
                   </div>
+                  {o.status === "paid" && o.redemption_link && o.user_id === me && (
+                    <a
+                      href={o.redemption_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                    >
+                      <ExternalLink className="h-4 w-4" /> Acessar link de resgate
+                    </a>
+                  )}
+                  {o.status === "awaiting_review" && o.user_id === me && (
+                    <div className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3 text-xs text-blue-800">
+                      Comprovante enviado. Aguarde a confirmação do admin para liberar o link de
+                      resgate.
+                    </div>
+                  )}
+                  {o.status === "pending" && o.admin_notes && o.user_id === me && (
+                    <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                      <strong>Comprovante rejeitado:</strong> {o.admin_notes}
+                    </div>
+                  )}
                   {o._participants.length > 0 && (
                     <div className="mt-3 space-y-2 border-t pt-3">
                       {o._participants.map((p: any) => {

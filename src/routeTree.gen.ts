@@ -16,6 +16,8 @@ import { Route as AuthenticatedMyTicketsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedEventsIdRouteImport } from './routes/_authenticated/events.$id'
 import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_authenticated/checkout.$orderId'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminEventsNewRouteImport } from './routes/_authenticated/admin.events.new'
 import { Route as AuthenticatedAdminEventsIdRouteImport } from './routes/_authenticated/admin.events.$id'
@@ -55,6 +57,18 @@ const AuthenticatedCheckoutOrderIdRoute =
     path: '/checkout/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminPaymentsRoute =
+  AuthenticatedAdminPaymentsRouteImport.update({
+    id: '/admin/payments',
+    path: '/admin/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -78,6 +92,8 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -89,6 +105,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -102,6 +120,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/_authenticated/events/$id': typeof AuthenticatedEventsIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -115,6 +135,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/my-tickets'
+    | '/admin/payments'
+    | '/admin/settings'
     | '/checkout/$orderId'
     | '/events/$id'
     | '/admin/'
@@ -126,6 +148,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/my-tickets'
     | '/'
+    | '/admin/payments'
+    | '/admin/settings'
     | '/checkout/$orderId'
     | '/events/$id'
     | '/admin'
@@ -138,6 +162,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/my-tickets'
     | '/_authenticated/'
+    | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/checkout/$orderId'
     | '/_authenticated/events/$id'
     | '/_authenticated/admin/'
@@ -203,6 +229,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckoutOrderIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/payments': {
+      id: '/_authenticated/admin/payments'
+      path: '/admin/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -230,6 +270,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyTicketsRoute: typeof AuthenticatedMyTicketsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedCheckoutOrderIdRoute: typeof AuthenticatedCheckoutOrderIdRoute
   AuthenticatedEventsIdRoute: typeof AuthenticatedEventsIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -240,6 +282,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyTicketsRoute: AuthenticatedMyTicketsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedCheckoutOrderIdRoute: AuthenticatedCheckoutOrderIdRoute,
   AuthenticatedEventsIdRoute: AuthenticatedEventsIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -258,13 +302,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
