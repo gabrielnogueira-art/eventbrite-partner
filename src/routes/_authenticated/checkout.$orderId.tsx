@@ -384,110 +384,139 @@ function CheckoutPage() {
 
             <Card className="p-6">
               <div className="mb-1 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                Pagamento via PIX
+                Método de pagamento
               </div>
-              <h2 className="text-lg font-semibold">Pague {fmtBRL(order.total_cents)} via PIX</h2>
+              <h2 className="text-lg font-semibold">Como você quer pagar {fmtBRL(order.total_cents)}?</h2>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${payMethod === "pix" ? "border-primary bg-primary/5" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <input type="radio" checked={payMethod === "pix"} onChange={() => setPayMethod("pix")} />
+                    <span className="font-medium">PIX</span>
+                  </div>
+                  <span className="ml-6 text-xs text-muted-foreground">Envie o comprovante para aprovação imediata.</span>
+                </label>
+                <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${payMethod === "credit_card" ? "border-primary bg-primary/5" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <input type="radio" checked={payMethod === "credit_card"} onChange={() => setPayMethod("credit_card")} />
+                    <span className="font-medium">Cartão de crédito</span>
+                  </div>
+                  <span className="ml-6 text-xs text-muted-foreground">Fica em análise: alguém da RioJunior entrará em contato para finalizar.</span>
+                </label>
+              </div>
               {order.admin_notes && (
                 <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
                   <strong>Aviso do admin:</strong> {order.admin_notes}
                 </div>
               )}
-
-              {!settings?.pix_key ? (
-                <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-800">
-                  O administrador ainda não cadastrou os dados PIX. Aguarde a configuração para
-                  realizar o pagamento.
-                </div>
-              ) : (
-                <div className="mt-4 grid gap-4 sm:grid-cols-[200px_1fr]">
-                  <div>
-                    {qrPreview ? (
-                      <img
-                        src={qrPreview}
-                        alt="QR Code PIX"
-                        className="h-48 w-48 rounded-lg border bg-white object-contain p-2"
-                      />
-                    ) : (
-                      <div className="flex h-48 w-48 items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
-                        QR Code não disponível
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                        Tipo de chave
-                      </div>
-                      <div className="font-medium">
-                        {settings.pix_key_type?.toUpperCase() ?? "—"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                        Chave PIX
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
-                          {settings.pix_key}
-                        </code>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={copyPix}
-                        >
-                          <Copy className="mr-1 h-3 w-3" /> Copiar
-                        </Button>
-                      </div>
-                    </div>
-                    {settings.pix_recipient_name && (
-                      <div>
-                        <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                          Recebedor
-                        </div>
-                        <div>{settings.pix_recipient_name}</div>
-                      </div>
-                    )}
-                    {settings.pix_instructions && (
-                      <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
-                        {settings.pix_instructions}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-6 space-y-2">
-                <Label>Comprovante da transferência *</Label>
-                <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm hover:bg-accent">
-                  <Upload className="h-4 w-4" />
-                  <span className="flex-1 truncate">
-                    {proofFile ? proofFile.name : "Selecionar imagem ou PDF do comprovante"}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    className="hidden"
-                    onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
-                <p className="text-xs text-muted-foreground">
-                  Após o envio, o admin confere o valor e libera o link de resgate em "Meus
-                  Ingressos".
-                </p>
-              </div>
             </Card>
+
+            {payMethod === "pix" ? (
+              <Card className="p-6">
+                <div className="mb-1 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                  Pagamento via PIX
+                </div>
+                <h2 className="text-lg font-semibold">Pague {fmtBRL(order.total_cents)} via PIX</h2>
+
+                {!settings?.pix_key ? (
+                  <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-800">
+                    O administrador ainda não cadastrou os dados PIX. Aguarde a configuração para
+                    realizar o pagamento.
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-[200px_1fr]">
+                    <div>
+                      {qrPreview ? (
+                        <img
+                          src={qrPreview}
+                          alt="QR Code PIX"
+                          className="h-48 w-48 rounded-lg border bg-white object-contain p-2"
+                        />
+                      ) : (
+                        <div className="flex h-48 w-48 items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                          QR Code não disponível
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground">Tipo de chave</div>
+                        <div className="font-medium">{settings.pix_key_type?.toUpperCase() ?? "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground">Chave PIX</div>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">{settings.pix_key}</code>
+                          <Button type="button" size="sm" variant="outline" onClick={copyPix}>
+                            <Copy className="mr-1 h-3 w-3" /> Copiar
+                          </Button>
+                        </div>
+                      </div>
+                      {settings.pix_recipient_name && (
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-muted-foreground">Recebedor</div>
+                          <div>{settings.pix_recipient_name}</div>
+                        </div>
+                      )}
+                      {settings.pix_instructions && (
+                        <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+                          {settings.pix_instructions}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 space-y-2">
+                  <Label>Comprovante da transferência *</Label>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm hover:bg-accent">
+                    <Upload className="h-4 w-4" />
+                    <span className="flex-1 truncate">
+                      {proofFile ? proofFile.name : "Selecionar imagem ou PDF do comprovante"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Após o envio, o admin confere o valor e libera o link de resgate em "Meus Ingressos".
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              <Card className="p-6">
+                <div className="mb-1 inline-block rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                  Pagamento com cartão de crédito
+                </div>
+                <h2 className="text-lg font-semibold">Pedido em análise após envio</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Ao finalizar, seu pedido ficará com status <strong>"em análise"</strong>. Alguém
+                  da RioJunior entrará em contato pelos dados de cobrança para combinar a cobrança
+                  no cartão. Após a confirmação do pagamento, o link de resgate (ou a presença, no
+                  caso de evento independente) será liberado em "Meus Ingressos".
+                </p>
+              </Card>
+            )}
 
             <Card className="flex items-center justify-between p-4">
               <div className="text-sm text-muted-foreground">
-                Revise os dados, envie o comprovante e aguarde a aprovação.
+                {payMethod === "pix"
+                  ? "Revise os dados, envie o comprovante e aguarde a aprovação."
+                  : "Revise os dados e envie o pedido para análise."}
               </div>
-              <Button type="submit" disabled={busy || expired || !settings?.pix_key}>
+              <Button
+                type="submit"
+                disabled={busy || expired || (payMethod === "pix" && !settings?.pix_key)}
+              >
                 {expired
                   ? "Reserva expirada"
                   : busy
                     ? "Enviando..."
-                    : "Enviar comprovante"}
+                    : payMethod === "pix"
+                      ? "Enviar comprovante"
+                      : "Enviar para análise"}
               </Button>
             </Card>
           </div>
