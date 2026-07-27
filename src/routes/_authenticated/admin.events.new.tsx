@@ -60,6 +60,7 @@ function NewEventPage() {
         ends_at: new Date(String(fd.get("ends_at"))).toISOString(),
         cancellation_policy: String(fd.get("cancellation_policy") ?? ""),
         max_tickets_per_user: Number(fd.get("max_tickets_per_user") || 5),
+        caravan_regions: caravanRegions,
         cover_url,
         created_by: user?.id,
       })
