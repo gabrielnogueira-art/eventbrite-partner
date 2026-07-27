@@ -232,7 +232,10 @@ function AdminPaymentsPage() {
             <DialogDescription>
               Confirme que recebeu o valor de{" "}
               <strong>{approving && fmtBRL(approving.total_cents)}</strong> referente a{" "}
-              <strong>{approving?.quantity}</strong> ingresso(s) e libere o link de resgate.
+              <strong>{approving?.quantity}</strong> ingresso(s)
+              {approving?.events?.event_kind === "independent"
+                ? " e confirme a presença no evento."
+                : " e libere o link de resgate."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -246,17 +249,24 @@ function AdminPaymentsPage() {
                 <ExternalLink className="h-3 w-3" /> Abrir comprovante em nova aba
               </a>
             )}
-            <div className="space-y-1">
-              <Label>Link de resgate dos ingressos *</Label>
-              <Input
-                value={redemptionLink}
-                onChange={(e) => setRedemptionLink(e.target.value)}
-                placeholder="https://..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Esse link aparecerá em "Meus Ingressos" da EJ assim que você aprovar.
-              </p>
-            </div>
+            {approving?.events?.event_kind === "independent" ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Evento independente: nenhum link de resgate é necessário. A EJ verá a presença
+                confirmada em "Meus Ingressos".
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label>Link de resgate dos ingressos *</Label>
+                <Input
+                  value={redemptionLink}
+                  onChange={(e) => setRedemptionLink(e.target.value)}
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esse link aparecerá em "Meus Ingressos" da EJ assim que você aprovar.
+                </p>
+              </div>
+            )}
             <div className="space-y-1">
               <Label>Observações (opcional)</Label>
               <Textarea
