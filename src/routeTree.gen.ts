@@ -23,6 +23,7 @@ import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminEjsRouteImport } from './routes/_authenticated/admin.ejs'
+import { Route as AuthenticatedAdminEjRequestsRouteImport } from './routes/_authenticated/admin.ej-requests'
 import { Route as AuthenticatedAdminDirectoryRouteImport } from './routes/_authenticated/admin.directory'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminEventsNewRouteImport } from './routes/_authenticated/admin.events.new'
@@ -100,6 +101,12 @@ const AuthenticatedAdminEjsRoute = AuthenticatedAdminEjsRouteImport.update({
   path: '/admin/ejs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminEjRequestsRoute =
+  AuthenticatedAdminEjRequestsRouteImport.update({
+    id: '/admin/ej-requests',
+    path: '/admin/ej-requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDirectoryRoute =
   AuthenticatedAdminDirectoryRouteImport.update({
     id: '/admin/directory',
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/admin/directory': typeof AuthenticatedAdminDirectoryRoute
+  '/admin/ej-requests': typeof AuthenticatedAdminEjRequestsRoute
   '/admin/ejs': typeof AuthenticatedAdminEjsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/directory': typeof AuthenticatedAdminDirectoryRoute
+  '/admin/ej-requests': typeof AuthenticatedAdminEjRequestsRoute
   '/admin/ejs': typeof AuthenticatedAdminEjsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/directory': typeof AuthenticatedAdminDirectoryRoute
+  '/_authenticated/admin/ej-requests': typeof AuthenticatedAdminEjRequestsRoute
   '/_authenticated/admin/ejs': typeof AuthenticatedAdminEjsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/auth/callback'
     | '/admin/directory'
+    | '/admin/ej-requests'
     | '/admin/ejs'
     | '/admin/payments'
     | '/admin/settings'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/'
     | '/admin/directory'
+    | '/admin/ej-requests'
     | '/admin/ejs'
     | '/admin/payments'
     | '/admin/settings'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/_authenticated/'
     | '/_authenticated/admin/directory'
+    | '/_authenticated/admin/ej-requests'
     | '/_authenticated/admin/ejs'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/settings'
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEjsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ej-requests': {
+      id: '/_authenticated/admin/ej-requests'
+      path: '/admin/ej-requests'
+      fullPath: '/admin/ej-requests'
+      preLoaderRoute: typeof AuthenticatedAdminEjRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/directory': {
       id: '/_authenticated/admin/directory'
       path: '/admin/directory'
@@ -389,6 +409,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminDirectoryRoute: typeof AuthenticatedAdminDirectoryRoute
+  AuthenticatedAdminEjRequestsRoute: typeof AuthenticatedAdminEjRequestsRoute
   AuthenticatedAdminEjsRoute: typeof AuthenticatedAdminEjsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -405,6 +426,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminDirectoryRoute: AuthenticatedAdminDirectoryRoute,
+  AuthenticatedAdminEjRequestsRoute: AuthenticatedAdminEjRequestsRoute,
   AuthenticatedAdminEjsRoute: AuthenticatedAdminEjsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
