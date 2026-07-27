@@ -142,11 +142,29 @@ function AdminPaymentsPage() {
           <div className="space-y-3">
             {pending.map((o: any) => {
               const ej: any = profileMap.get(o.user_id) ?? {};
+              const isCard = o.payment_method === "credit_card";
+              const isIndependent = o.events?.event_kind === "independent";
               return (
                 <Card key={o.id} className="p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{o.events?.title}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold">{o.events?.title}</div>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
+                            isCard
+                              ? "bg-amber-500/15 text-amber-700"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {isCard ? "Cartão de crédito" : "PIX"}
+                        </span>
+                        {isIndependent && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Independente
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {o.events?.starts_at && fmtDateTime(o.events.starts_at)}
                       </div>
@@ -167,17 +185,20 @@ function AdminPaymentsPage() {
                         <span className="font-bold">{fmtBRL(o.total_cents)}</span>
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        Comprovante enviado em {fmtDateTime(o.payment_proof_submitted_at)}
+                        {isCard ? "Solicitado" : "Comprovante enviado"} em{" "}
+                        {fmtDateTime(o.payment_proof_submitted_at)}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openProof(o.payment_proof_url)}
-                      >
-                        <Eye className="mr-1 h-3 w-3" /> Ver comprovante
-                      </Button>
+                      {!isCard && o.payment_proof_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openProof(o.payment_proof_url)}
+                        >
+                          <Eye className="mr-1 h-3 w-3" /> Ver comprovante
+                        </Button>
+                      )}
                       <Button size="sm" onClick={() => openApprove(o)}>
                         <CheckCircle2 className="mr-1 h-3 w-3" /> Aprovar
                       </Button>
