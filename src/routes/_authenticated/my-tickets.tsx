@@ -55,7 +55,7 @@ function MyTicketsPage() {
       const { data: myOrders } = await supabase
         .from("orders")
         .select(
-          "*, events(title, starts_at, location_name, transfer_deadline), ticket_lots(name), order_participants(*)",
+          "*, events(title, starts_at, location_name, transfer_deadline, event_kind), ticket_lots(name), order_participants(*)",
         )
         .eq("user_id", me)
         .order("created_at", { ascending: false });
@@ -63,7 +63,7 @@ function MyTicketsPage() {
       // Participants I currently own (incl. transferred to me from other EJs)
       const { data: ownedParts } = await supabase
         .from("order_participants")
-        .select("*, orders!inner(*, events(title, starts_at, location_name, transfer_deadline), ticket_lots(name))")
+        .select("*, orders!inner(*, events(title, starts_at, location_name, transfer_deadline, event_kind), ticket_lots(name))")
         .eq("ej_owner_id", me);
 
       const ordersMap = new Map<string, any>();
@@ -176,20 +176,27 @@ function MyTicketsPage() {
                       <div className="font-semibold">{fmtBRL(o.total_cents)}</div>
                     )}
                   </div>
-                  {o.status === "paid" && o.redemption_link && o.user_id === me && (
-                    <a
-                      href={o.redemption_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-                    >
-                      <ExternalLink className="h-4 w-4" /> Acessar link de resgate
-                    </a>
+                  {o.status === "paid" && o.user_id === me && (
+                    o.events?.event_kind === "independent" ? (
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-success/15 px-3 py-2 text-sm font-medium text-success">
+                        ✓ Presença confirmada no evento
+                      </div>
+                    ) : o.redemption_link ? (
+                      <a
+                        href={o.redemption_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                      >
+                        <ExternalLink className="h-4 w-4" /> Acessar link de resgate
+                      </a>
+                    ) : null
                   )}
                   {o.status === "awaiting_review" && o.user_id === me && (
                     <div className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3 text-xs text-blue-800">
-                      Comprovante enviado. Aguarde a confirmação do admin para liberar o link de
-                      resgate.
+                      {o.payment_method === "credit_card"
+                        ? "Pedido no cartão em análise. Aguarde o contato da RioJunior para finalizar o pagamento."
+                        : "Comprovante enviado. Aguarde a confirmação do admin para liberar o acesso."}
                     </div>
                   )}
                   {o.status === "pending" && o.admin_notes && o.user_id === me && (

@@ -38,7 +38,7 @@ function AdminPaymentsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
-        .select("*, events(title, starts_at), ticket_lots(name, price_cents)")
+        .select("*, events(title, starts_at, event_kind), ticket_lots(name, price_cents)")
         .eq("status", "awaiting_review")
         .order("payment_proof_submitted_at", { ascending: true });
       return data ?? [];
@@ -87,14 +87,18 @@ function AdminPaymentsPage() {
 
   const confirmApprove = async () => {
     if (!approving) return;
-    if (!redemptionLink.trim()) return toast.error("Informe o link de resgate");
+    const isIndependent = approving.events?.event_kind === "independent";
+    if (!isIndependent && !redemptionLink.trim())
+      return toast.error("Informe o link de resgate");
     const { error } = await supabase.rpc("approve_order_by_admin", {
       _order_id: approving.id,
-      _redemption_link: redemptionLink.trim(),
+      _redemption_link: redemptionLink.trim() || "",
       _notes: adminNotes.trim() || undefined,
     });
     if (error) return toast.error(error.message);
-    toast.success("Pagamento aprovado e link liberado");
+    toast.success(
+      isIndependent ? "Pagamento aprovado. Presença confirmada." : "Pagamento aprovado e link liberado",
+    );
     setApproving(null);
     qc.invalidateQueries({ queryKey: ["admin-pending-payments"] });
   };
@@ -138,11 +142,29 @@ function AdminPaymentsPage() {
           <div className="space-y-3">
             {pending.map((o: any) => {
               const ej: any = profileMap.get(o.user_id) ?? {};
+              const isCard = o.payment_method === "credit_card";
+              const isIndependent = o.events?.event_kind === "independent";
               return (
                 <Card key={o.id} className="p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{o.events?.title}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold">{o.events?.title}</div>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
+                            isCard
+                              ? "bg-amber-500/15 text-amber-700"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {isCard ? "Cartão de crédito" : "PIX"}
+                        </span>
+                        {isIndependent && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Independente
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {o.events?.starts_at && fmtDateTime(o.events.starts_at)}
                       </div>
@@ -163,17 +185,20 @@ function AdminPaymentsPage() {
                         <span className="font-bold">{fmtBRL(o.total_cents)}</span>
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        Comprovante enviado em {fmtDateTime(o.payment_proof_submitted_at)}
+                        {isCard ? "Solicitado" : "Comprovante enviado"} em{" "}
+                        {fmtDateTime(o.payment_proof_submitted_at)}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openProof(o.payment_proof_url)}
-                      >
-                        <Eye className="mr-1 h-3 w-3" /> Ver comprovante
-                      </Button>
+                      {!isCard && o.payment_proof_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openProof(o.payment_proof_url)}
+                        >
+                          <Eye className="mr-1 h-3 w-3" /> Ver comprovante
+                        </Button>
+                      )}
                       <Button size="sm" onClick={() => openApprove(o)}>
                         <CheckCircle2 className="mr-1 h-3 w-3" /> Aprovar
                       </Button>
@@ -207,7 +232,10 @@ function AdminPaymentsPage() {
             <DialogDescription>
               Confirme que recebeu o valor de{" "}
               <strong>{approving && fmtBRL(approving.total_cents)}</strong> referente a{" "}
-              <strong>{approving?.quantity}</strong> ingresso(s) e libere o link de resgate.
+              <strong>{approving?.quantity}</strong> ingresso(s)
+              {approving?.events?.event_kind === "independent"
+                ? " e confirme a presença no evento."
+                : " e libere o link de resgate."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -221,17 +249,24 @@ function AdminPaymentsPage() {
                 <ExternalLink className="h-3 w-3" /> Abrir comprovante em nova aba
               </a>
             )}
-            <div className="space-y-1">
-              <Label>Link de resgate dos ingressos *</Label>
-              <Input
-                value={redemptionLink}
-                onChange={(e) => setRedemptionLink(e.target.value)}
-                placeholder="https://..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Esse link aparecerá em "Meus Ingressos" da EJ assim que você aprovar.
-              </p>
-            </div>
+            {approving?.events?.event_kind === "independent" ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Evento independente: nenhum link de resgate é necessário. A EJ verá a presença
+                confirmada em "Meus Ingressos".
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label>Link de resgate dos ingressos *</Label>
+                <Input
+                  value={redemptionLink}
+                  onChange={(e) => setRedemptionLink(e.target.value)}
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esse link aparecerá em "Meus Ingressos" da EJ assim que você aprovar.
+                </p>
+              </div>
+            )}
             <div className="space-y-1">
               <Label>Observações (opcional)</Label>
               <Textarea

@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, ArrowUp, ArrowDown, Users } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
@@ -79,17 +81,98 @@ function AdminEventPage() {
   });
   const ejMap = new Map(ejProfiles.map((p: any) => [p.id, p]));
 
-  const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "" });
+  const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "", assigned_ej_slug: "__all__" });
   const [editingLot, setEditingLot] = useState<any>(null);
   const [transferDeadline, setTransferDeadline] = useState("");
   const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
   const [coverBusy, setCoverBusy] = useState(false);
+  const [eventKind, setEventKind] = useState<"portal_bj" | "independent">("portal_bj");
+  const [info, setInfo] = useState({
+    title: "",
+    organizer: "",
+    description: "",
+    location_name: "",
+    address: "",
+    starts_at: "",
+    ends_at: "",
+    cancellation_policy: "",
+    max_tickets_per_user: 5,
+  });
+  const [infoBusy, setInfoBusy] = useState(false);
+  const [kindBusy, setKindBusy] = useState(false);
+
+  const { data: directory = [] } = useQuery({
+    queryKey: ["ej-directory-admin"],
+    queryFn: async () =>
+      (await supabase.from("ej_directory").select("slug, name, region").order("name")).data ?? [],
+  });
+
   useEffect(() => {
     if (event) {
       setTransferDeadline(toLocalInput(event.transfer_deadline));
       setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
+      setEventKind(((event as any).event_kind ?? "portal_bj") as "portal_bj" | "independent");
+      setInfo({
+        title: event.title ?? "",
+        organizer: event.organizer ?? "",
+        description: event.description ?? "",
+        location_name: event.location_name ?? "",
+        address: event.address ?? "",
+        starts_at: toLocalInput(event.starts_at),
+        ends_at: toLocalInput(event.ends_at),
+        cancellation_policy: event.cancellation_policy ?? "",
+        max_tickets_per_user: event.max_tickets_per_user ?? 5,
+      });
     }
   }, [event]);
+
+  const saveInfo = async () => {
+    if (!info.title || !info.organizer || !info.starts_at || !info.ends_at)
+      return toast.error("Preencha os campos obrigatórios do evento");
+    if (new Date(info.ends_at) <= new Date(info.starts_at))
+      return toast.error("O término deve ser posterior ao início.");
+    setInfoBusy(true);
+    const { error } = await supabase
+      .from("events")
+      .update({
+        title: info.title,
+        organizer: info.organizer,
+        description: info.description || null,
+        location_name: info.location_name || null,
+        address: info.address || null,
+        starts_at: new Date(info.starts_at).toISOString(),
+        ends_at: new Date(info.ends_at).toISOString(),
+        cancellation_policy: info.cancellation_policy || null,
+        max_tickets_per_user: Number(info.max_tickets_per_user) || 5,
+      })
+      .eq("id", id);
+    setInfoBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Informações do evento atualizadas");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const saveEventKind = async () => {
+    setKindBusy(true);
+    const { error } = await supabase.from("events").update({ event_kind: eventKind }).eq("id", id);
+    setKindBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Tipo do evento atualizado");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const moveLot = async (lot: any, dir: -1 | 1) => {
+    const list = [...lots] as any[];
+    const idx = list.findIndex((l) => l.id === lot.id);
+    const swap = idx + dir;
+    if (swap < 0 || swap >= list.length) return;
+    const other = list[swap];
+    const a = supabase.from("ticket_lots").update({ sort_order: other.sort_order }).eq("id", lot.id);
+    const b = supabase.from("ticket_lots").update({ sort_order: lot.sort_order }).eq("id", other.id);
+    const [r1, r2] = await Promise.all([a, b]);
+    if (r1.error || r2.error) return toast.error(r1.error?.message ?? r2.error?.message ?? "Erro");
+    qc.invalidateQueries({ queryKey: ["admin-lots", id] });
+  };
 
   const saveTransferDeadline = async () => {
     const value = transferDeadline ? new Date(transferDeadline).toISOString() : null;
@@ -147,10 +230,11 @@ function AdminEventPage() {
       opens_at: new Date(newLot.opens).toISOString(),
       closes_at: new Date(newLot.closes).toISOString(),
       sort_order: lots.length + 1,
+      assigned_ej_slug: newLot.assigned_ej_slug && newLot.assigned_ej_slug !== "__all__" ? newLot.assigned_ej_slug : null,
     });
     if (error) return toast.error(error.message);
     toast.success("Lote criado");
-    setNewLot({ name: "", price: "", total: "", opens: "", closes: "" });
+    setNewLot({ name: "", price: "", total: "", opens: "", closes: "", assigned_ej_slug: "__all__" });
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
   };
 
@@ -179,6 +263,7 @@ function AdminEventPage() {
         total_quantity: parseInt(editingLot.total),
         opens_at: new Date(editingLot.opens).toISOString(),
         closes_at: new Date(editingLot.closes).toISOString(),
+        assigned_ej_slug: editingLot.assigned_ej_slug && editingLot.assigned_ej_slug !== "__all__" ? editingLot.assigned_ej_slug : null,
       })
       .eq("id", editingLot.id);
 
@@ -407,12 +492,95 @@ function AdminEventPage() {
           </div>
         </Card>
 
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <Info className="h-5 w-5" /> Informações do evento
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Edite qualquer informação do evento a qualquer momento.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Título *</Label>
+              <Input value={info.title} onChange={(e) => setInfo({ ...info, title: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Organizador *</Label>
+              <Input value={info.organizer} onChange={(e) => setInfo({ ...info, organizer: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Máx. ingressos por usuário</Label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={info.max_tickets_per_user}
+                onChange={(e) => setInfo({ ...info, max_tickets_per_user: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Descrição</Label>
+              <Textarea rows={4} value={info.description} onChange={(e) => setInfo({ ...info, description: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Início *</Label>
+              <Input type="datetime-local" value={info.starts_at} onChange={(e) => setInfo({ ...info, starts_at: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Término *</Label>
+              <Input type="datetime-local" value={info.ends_at} onChange={(e) => setInfo({ ...info, ends_at: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Nome do local</Label>
+              <Input value={info.location_name} onChange={(e) => setInfo({ ...info, location_name: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Endereço</Label>
+              <Input value={info.address} onChange={(e) => setInfo({ ...info, address: e.target.value })} />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Política de cancelamento</Label>
+              <Textarea rows={3} value={info.cancellation_policy} onChange={(e) => setInfo({ ...info, cancellation_policy: e.target.value })} />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveInfo} disabled={infoBusy}>{infoBusy ? "Salvando..." : "Salvar alterações"}</Button>
+          </div>
+        </Card>
 
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <Info className="h-5 w-5" /> Tipo do evento
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Evento paralelo ao Portal BJ exige link de resgate para liberar os ingressos. Evento
+            independente apenas confirma a presença da EJ.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${eventKind === "portal_bj" ? "border-primary bg-primary/5" : ""}`}>
+              <div className="flex items-center gap-2">
+                <input type="radio" checked={eventKind === "portal_bj"} onChange={() => setEventKind("portal_bj")} />
+                <span className="font-medium">Paralelo ao Portal BJ</span>
+              </div>
+              <span className="ml-6 text-xs text-muted-foreground">Admin libera link de resgate após aprovar o pagamento.</span>
+            </label>
+            <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${eventKind === "independent" ? "border-primary bg-primary/5" : ""}`}>
+              <div className="flex items-center gap-2">
+                <input type="radio" checked={eventKind === "independent"} onChange={() => setEventKind("independent")} />
+                <span className="font-medium">Evento independente</span>
+              </div>
+              <span className="ml-6 text-xs text-muted-foreground">Sem link de resgate — presença confirmada automaticamente.</span>
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveEventKind} disabled={kindBusy}>{kindBusy ? "Salvando..." : "Salvar tipo"}</Button>
+          </div>
+        </Card>
 
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>
           <div className="space-y-2">
-            {lots.map((l: any) =>
+            {lots.map((l: any, idx: number) =>
               editingLot?.id === l.id ? (
                 <div key={l.id} className="grid gap-3 rounded-lg border p-4 bg-muted/30">
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -456,6 +624,22 @@ function AdminEventPage() {
                         onChange={(e) => setEditingLot({ ...editingLot, closes: e.target.value })}
                       />
                     </div>
+                    <div className="space-y-1 sm:col-span-2 lg:col-span-5">
+                      <Label className="text-xs flex items-center gap-1"><Users className="h-3 w-3" /> EJ vinculada (opcional)</Label>
+                      <Select
+                        value={editingLot.assigned_ej_slug ?? "__all__"}
+                        onValueChange={(v) => setEditingLot({ ...editingLot, assigned_ej_slug: v })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__all__">Todas as EJs</SelectItem>
+                          {(directory as any[]).map((d) => (
+                            <SelectItem key={d.slug} value={d.slug}>{d.name} · {d.region}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">Se selecionada, apenas essa EJ verá este lote no checkout.</p>
+                    </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <Button size="sm" variant="ghost" onClick={() => setEditingLot(null)}>
@@ -473,7 +657,14 @@ function AdminEventPage() {
                   key={l.id}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm hover:border-primary/50 transition-colors"
                 >
-                  <div className="font-medium min-w-[120px]">{l.name}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="font-medium min-w-[120px]">{l.name}</div>
+                    {l.assigned_ej_slug && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        EJ: {(directory as any[]).find((d) => d.slug === l.assigned_ej_slug)?.name ?? l.assigned_ej_slug}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-muted-foreground">
                     {fmtBRL(l.price_cents)} · {l.sold_quantity}/{l.total_quantity} vendidos
                   </div>
@@ -481,6 +672,12 @@ function AdminEventPage() {
                     {fmtDateTime(l.opens_at)} → {fmtDateTime(l.closes_at)}
                   </div>
                   <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" disabled={idx === 0} onClick={() => moveLot(l, -1)} title="Mover para cima">
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={idx === lots.length - 1} onClick={() => moveLot(l, 1)} title="Mover para baixo">
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -492,6 +689,7 @@ function AdminEventPage() {
                           total: l.total_quantity.toString(),
                           opens: toLocalInput(l.opens_at),
                           closes: toLocalInput(l.closes_at),
+                          assigned_ej_slug: l.assigned_ej_slug ?? "__all__",
                         })
                       }
                     >
@@ -556,6 +754,22 @@ function AdminEventPage() {
                   value={newLot.closes}
                   onChange={(e) => setNewLot({ ...newLot, closes: e.target.value })}
                 />
+              </div>
+              <div className="space-y-1 sm:col-span-2 lg:col-span-5">
+                <Label className="text-xs flex items-center gap-1"><Users className="h-3 w-3" /> EJ vinculada (opcional)</Label>
+                <Select
+                  value={newLot.assigned_ej_slug}
+                  onValueChange={(v) => setNewLot({ ...newLot, assigned_ej_slug: v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas as EJs</SelectItem>
+                    {(directory as any[]).map((d) => (
+                      <SelectItem key={d.slug} value={d.slug}>{d.name} · {d.region}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">Deixe em "Todas as EJs" para pacotes gerais. Selecione uma EJ para criar um pacote exclusivo, visível apenas para ela.</p>
               </div>
             </div>
             <Button className="mt-3" onClick={addLot}>

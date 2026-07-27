@@ -25,6 +25,7 @@ function NewEventPage() {
   }, [isAdmin, navigate]);
   const [busy, setBusy] = useState(false);
   const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
+  const [eventKind, setEventKind] = useState<"portal_bj" | "independent">("portal_bj");
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,6 +62,7 @@ function NewEventPage() {
         cancellation_policy: String(fd.get("cancellation_policy") ?? ""),
         max_tickets_per_user: Number(fd.get("max_tickets_per_user") || 5),
         caravan_regions: caravanRegions,
+        event_kind: eventKind,
         cover_url,
         created_by: user?.id,
       })
@@ -189,6 +191,47 @@ function NewEventPage() {
               </div>
             </div>
 
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-foreground/80">
+                <Info className="h-5 w-5" /> Tipo do evento
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Eventos em paralelo com o Portal BJ exigem link de resgate para liberar os
+                ingressos. Eventos independentes apenas confirmam a presença da EJ.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${eventKind === "portal_bj" ? "border-primary bg-primary/5" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="event_kind"
+                      checked={eventKind === "portal_bj"}
+                      onChange={() => setEventKind("portal_bj")}
+                    />
+                    <span className="font-medium">Paralelo ao Portal BJ</span>
+                  </div>
+                  <span className="ml-6 text-xs text-muted-foreground">
+                    Admin libera um link de resgate após aprovar o pagamento.
+                  </span>
+                </label>
+                <label className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${eventKind === "independent" ? "border-primary bg-primary/5" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="event_kind"
+                      checked={eventKind === "independent"}
+                      onChange={() => setEventKind("independent")}
+                    />
+                    <span className="font-medium">Evento independente</span>
+                  </div>
+                  <span className="ml-6 text-xs text-muted-foreground">
+                    Sem link de resgate — a EJ apenas tem sua presença confirmada.
+                  </span>
+                </label>
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin" })}>
