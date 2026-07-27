@@ -138,8 +138,8 @@ function DirectoryPage() {
                   {items.map((r: any) =>
                     editing?.id === r.id ? (
                       <div key={r.id} className="grid gap-2 rounded-md border bg-muted/30 p-2 sm:grid-cols-[1fr_180px_auto]">
-                        <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-                        <Select value={editing.region} onValueChange={(v) => setEditing({ ...editing, region: v })}>
+                        <Input value={editing.name} onChange={(e) => setEditing((s) => (s ? { ...s, name: e.target.value } : s))} />
+                        <Select value={editing.region} onValueChange={(v) => setEditing((s) => (s ? { ...s, region: v } : s))}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {REGIONS.map((rg) => <SelectItem key={rg} value={rg}>{rg}</SelectItem>)}
