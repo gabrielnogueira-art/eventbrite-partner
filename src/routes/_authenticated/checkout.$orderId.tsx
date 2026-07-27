@@ -160,8 +160,8 @@ function CheckoutPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (participants.some((p) => !p.full_name || !p.email))
-      return toast.error("Preencha todos os participantes");
+    if (participants.some((p) => !p.full_name || !p.email || !p.phone))
+      return toast.error("Preencha nome, e-mail e telefone de todos os participantes");
     if (requireCaravan) {
       for (const p of participants) {
         const err = validateCaravan(p);
