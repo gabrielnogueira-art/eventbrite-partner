@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Checkbox } from "@/components/ui/checkbox";
+import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
   component: AdminEventPage,
