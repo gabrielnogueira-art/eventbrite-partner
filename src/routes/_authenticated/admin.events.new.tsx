@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Calendar, MapPin, AlignLeft, Info, Image as ImageIcon } from "lucide-react";
+import { Calendar, MapPin, AlignLeft, Info, Image as ImageIcon, Plane } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/new")({
   component: NewEventPage,
