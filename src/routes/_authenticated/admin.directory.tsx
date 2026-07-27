@@ -44,7 +44,7 @@ function DirectoryPage() {
   const [editing, setEditing] = useState<{ id: string; name: string; region: string } | null>(null);
 
   const { data: rows = [] } = useQuery({
-    queryKey: ["ej-directory-admin"],
+    queryKey: ["ej-directory-list"],
     queryFn: async () =>
       (await supabase.from("ej_directory").select("*").order("region").order("name")).data ?? [],
   });
