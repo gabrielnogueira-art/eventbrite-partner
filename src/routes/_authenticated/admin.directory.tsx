@@ -67,8 +67,9 @@ function DirectoryPage() {
     if (error) return toast.error(error.message);
     toast.success("EJ adicionada");
     setNewEJ({ name: "", region: REGIONS[0] as string });
-    qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
     qc.invalidateQueries({ queryKey: ["ej-directory"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
   const save = async () => {
@@ -80,6 +81,8 @@ function DirectoryPage() {
     if (error) return toast.error(error.message);
     toast.success("Atualizado");
     setEditing(null);
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory"] });
     qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
@@ -88,6 +91,8 @@ function DirectoryPage() {
     const { error } = await supabase.from("ej_directory").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Removido");
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory"] });
     qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
