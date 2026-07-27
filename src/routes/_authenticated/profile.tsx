@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { User, Search } from "lucide-react";
+import { User, Search, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -21,26 +21,37 @@ function ProfilePage() {
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", u.user.id)
-        .maybeSingle();
+      const { data } = await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle();
       return { user: u.user, profile: data };
     },
   });
 
   const { data: directory = [] } = useQuery({
     queryKey: ["ej-directory"],
-    queryFn: async () =>
-      (await supabase.from("ej_directory").select("*").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("ej_directory").select("*").order("name")).data ?? [],
+  });
+
+  const { data: pendingReq } = useQuery({
+    queryKey: ["my-ej-change-request"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase
+        .from("ej_change_requests" as any)
+        .select("*")
+        .eq("user_id", u.user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
   });
 
   const [fullName, setFullName] = useState("");
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pwBusy, setPwBusy] = useState(false);
 
   useEffect(() => {
     if (profile?.profile) {
@@ -53,44 +64,36 @@ function ProfilePage() {
     const t = q.trim().toLowerCase();
     if (!t) return directory;
     return directory.filter(
-      (e: any) =>
-        e.name.toLowerCase().includes(t) || e.region.toLowerCase().includes(t),
+      (e: any) => e.name.toLowerCase().includes(t) || e.region.toLowerCase().includes(t),
     );
   }, [q, directory]);
 
+  const currentSlug = profile?.profile?.ej_slug ?? "";
   const selectedEj = directory.find((e: any) => e.slug === selectedSlug);
+  const ejChanged = selectedSlug && selectedSlug !== currentSlug;
 
-  const save = async () => {
+  const saveName = async () => {
     if (!profile?.user) return;
-    if (!selectedSlug || !selectedEj) return toast.error("Selecione sua EJ");
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
-      .update({
-        full_name: fullName.trim() || null,
-        ej_name: (selectedEj as any).name,
-        ej_slug: (selectedEj as any).slug,
-        region: (selectedEj as any).region,
-      })
+      .update({ full_name: fullName.trim() || null })
       .eq("id", profile.user.id);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Perfil atualizado");
-    qc.invalidateQueries({ queryKey: ["current-profile"] });
+    toast.success("Nome atualizado");
     qc.invalidateQueries({ queryKey: ["profile-me"] });
+    qc.invalidateQueries({ queryKey: ["current-profile"] });
   };
 
-  const changePassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const pw = String(fd.get("password"));
-    if (pw.length < 8) return toast.error("Mínimo 8 caracteres");
-    setPwBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: pw });
-    setPwBusy(false);
+  const requestEjChange = async () => {
+    if (!selectedSlug || !ejChanged) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("request_ej_change" as any, { _slug: selectedSlug } as any);
+    setBusy(false);
     if (error) return toast.error(error.message);
-    (e.currentTarget as HTMLFormElement).reset();
-    toast.success("Senha atualizada");
+    toast.success("Solicitação enviada. Aguarde aprovação do admin.");
+    qc.invalidateQueries({ queryKey: ["my-ej-change-request"] });
   };
 
   return (
@@ -102,9 +105,7 @@ function ProfilePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Meu perfil</h1>
-            <p className="text-sm text-muted-foreground">
-              Dados da EJ vinculada a este login.
-            </p>
+            <p className="text-sm text-muted-foreground">Dados da EJ vinculada a este login.</p>
           </div>
         </div>
 
@@ -115,21 +116,45 @@ function ProfilePage() {
           </div>
           <div className="space-y-1">
             <Label>Nome completo</Label>
-            <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
-          <div className="space-y-1">
-            <Label>Sua EJ</Label>
-            {selectedEj && (
-              <div className="mb-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
-                <div className="font-medium">{(selectedEj as any).name}</div>
+          <div className="flex justify-end">
+            <Button onClick={saveName} disabled={busy} variant="outline">
+              Salvar nome
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="space-y-4 p-6">
+          <div>
+            <h2 className="text-lg font-semibold">EJ vinculada</h2>
+            <p className="text-sm text-muted-foreground">
+              Trocar de EJ exige aprovação do administrador. A região é definida automaticamente.
+            </p>
+          </div>
+
+          {profile?.profile?.ej_name && (
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+              <div className="text-xs uppercase text-muted-foreground">EJ atual</div>
+              <div className="font-medium">{profile.profile.ej_name}</div>
+              <div className="text-xs text-muted-foreground">Região: {profile.profile.region}</div>
+            </div>
+          )}
+
+          {pendingReq && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+              <Clock className="mt-0.5 h-4 w-4 text-amber-600" />
+              <div>
+                <div className="font-medium text-amber-700 dark:text-amber-500">Solicitação pendente</div>
                 <div className="text-xs text-muted-foreground">
-                  Região: {(selectedEj as any).region}
+                  Você pediu troca para <span className="font-medium">{(pendingReq as any).requested_ej_name}</span> ({(pendingReq as any).requested_region}). Aguardando análise.
                 </div>
               </div>
-            )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Selecionar nova EJ</Label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -139,24 +164,20 @@ function ProfilePage() {
                 className="pl-8"
               />
             </div>
-            <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border p-2">
+            <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border p-2">
               {filtered.map((e: any) => (
                 <button
                   key={e.slug}
                   type="button"
                   onClick={() => setSelectedSlug(e.slug)}
                   className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                    selectedSlug === e.slug
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent"
+                    selectedSlug === e.slug ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                   }`}
                 >
                   <span className="font-medium">{e.name}</span>
                   <span
                     className={`text-xs ${
-                      selectedSlug === e.slug
-                        ? "text-primary-foreground/80"
-                        : "text-muted-foreground"
+                      selectedSlug === e.slug ? "text-primary-foreground/80" : "text-muted-foreground"
                     }`}
                   >
                     {e.region}
@@ -164,35 +185,21 @@ function ProfilePage() {
                 </button>
               ))}
               {filtered.length === 0 && (
-                <div className="p-3 text-center text-xs text-muted-foreground">
-                  Nenhuma EJ encontrada.
-                </div>
+                <div className="p-3 text-center text-xs text-muted-foreground">Nenhuma EJ encontrada.</div>
               )}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              A região é definida automaticamente com base na EJ selecionada.
-            </p>
+            {selectedEj && ejChanged && (
+              <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                Nova EJ: <span className="font-medium text-foreground">{(selectedEj as any).name}</span> — Região {(selectedEj as any).region}
+              </div>
+            )}
           </div>
+
           <div className="flex justify-end">
-            <Button onClick={save} disabled={busy}>
-              {busy ? "Salvando..." : "Salvar alterações"}
+            <Button onClick={requestEjChange} disabled={busy || !ejChanged || !!pendingReq}>
+              {pendingReq ? "Solicitação pendente" : "Solicitar troca de EJ"}
             </Button>
           </div>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold">Alterar senha</h2>
-          <form onSubmit={changePassword} className="space-y-3">
-            <div className="space-y-1">
-              <Label>Nova senha</Label>
-              <Input type="password" name="password" minLength={8} required />
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" variant="outline" disabled={pwBusy}>
-                {pwBusy ? "Atualizando..." : "Atualizar senha"}
-              </Button>
-            </div>
-          </form>
         </Card>
       </div>
     </AppShell>
