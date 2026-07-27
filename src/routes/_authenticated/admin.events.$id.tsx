@@ -344,6 +344,72 @@ function AdminEventPage() {
         </Card>
 
         <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <ImageIcon className="h-5 w-5" /> Capa do evento
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Você pode trocar a imagem de capa a qualquer momento.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            {event.cover_url ? (
+              <img
+                src={event.cover_url}
+                alt="Capa atual"
+                className="h-24 w-40 rounded-md border object-cover"
+              />
+            ) : (
+              <div className="flex h-24 w-40 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                Sem capa
+              </div>
+            )}
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm hover:bg-accent">
+              <ImageIcon className="h-4 w-4" />
+              {coverBusy ? "Enviando..." : "Selecionar nova imagem"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={coverBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) changeCover(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <Plane className="h-5 w-5" /> Regiões com caravana
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Selecione as regiões cujas EJs verão a opção de caravana no checkout deste evento.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {REGIONS.map((r) => (
+              <label key={r} className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm">
+                <Checkbox
+                  checked={caravanRegions.includes(r)}
+                  onCheckedChange={(c) =>
+                    setCaravanRegions((prev) =>
+                      c === true ? [...prev, r] : prev.filter((x) => x !== r),
+                    )
+                  }
+                />
+                <span>{r}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveCaravanRegions}>Salvar regiões</Button>
+          </div>
+        </Card>
+
+
+
+        <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>
           <div className="space-y-2">
             {lots.map((l: any) =>
