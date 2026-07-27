@@ -24,6 +24,7 @@ function NewEventPage() {
     if (isAdmin === false) navigate({ to: "/" });
   }, [isAdmin, navigate]);
   const [busy, setBusy] = useState(false);
+  const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
