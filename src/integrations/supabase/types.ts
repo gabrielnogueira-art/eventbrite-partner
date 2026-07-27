@@ -72,6 +72,7 @@ export type Database = {
         Row: {
           address: string | null
           cancellation_policy: string | null
+          caravan_regions: string[]
           cover_url: string | null
           created_at: string
           created_by: string | null
@@ -89,6 +90,7 @@ export type Database = {
         Insert: {
           address?: string | null
           cancellation_policy?: string | null
+          caravan_regions?: string[]
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -106,6 +108,7 @@ export type Database = {
         Update: {
           address?: string | null
           cancellation_policy?: string | null
+          caravan_regions?: string[]
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
