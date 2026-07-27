@@ -255,7 +255,7 @@ function CheckoutPage() {
               <h2 className="text-lg font-semibold">Informações do participante</h2>
               <p className="mb-4 text-sm text-muted-foreground">
                 {requireCaravan
-                  ? `Sua EJ é da região ${profile?.region?.toUpperCase()}. Marque a caixa em cada participante interessado na caravana para liberar os campos adicionais.`
+                  ? `Este evento oferece caravana para a região ${profile?.region}. Marque a caixa em cada participante interessado para liberar os campos adicionais.`
                   : "Preencha os dados como devem aparecer no ingresso."}
               </p>
               <div className="space-y-6">
