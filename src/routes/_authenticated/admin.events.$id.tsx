@@ -18,6 +18,32 @@ import { REGIONS } from "@/lib/regions";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+
+function SortableLotRow({
+  id,
+  children,
+}: {
+  id: string;
+  children: (args: {
+    listeners: SyntheticListenerMap | undefined;
+    setActivatorNodeRef: (node: HTMLElement | null) => void;
+  }) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children({ listeners, setActivatorNodeRef })}
+    </div>
+  );
+}
+
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
   component: AdminEventPage,
