@@ -38,7 +38,7 @@ function AdminPaymentsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
-        .select("*, events(title, starts_at), ticket_lots(name, price_cents)")
+        .select("*, events(title, starts_at, event_kind), ticket_lots(name, price_cents)")
         .eq("status", "awaiting_review")
         .order("payment_proof_submitted_at", { ascending: true });
       return data ?? [];
@@ -87,14 +87,18 @@ function AdminPaymentsPage() {
 
   const confirmApprove = async () => {
     if (!approving) return;
-    if (!redemptionLink.trim()) return toast.error("Informe o link de resgate");
+    const isIndependent = approving.events?.event_kind === "independent";
+    if (!isIndependent && !redemptionLink.trim())
+      return toast.error("Informe o link de resgate");
     const { error } = await supabase.rpc("approve_order_by_admin", {
       _order_id: approving.id,
-      _redemption_link: redemptionLink.trim(),
+      _redemption_link: redemptionLink.trim() || "",
       _notes: adminNotes.trim() || undefined,
     });
     if (error) return toast.error(error.message);
-    toast.success("Pagamento aprovado e link liberado");
+    toast.success(
+      isIndependent ? "Pagamento aprovado. Presença confirmada." : "Pagamento aprovado e link liberado",
+    );
     setApproving(null);
     qc.invalidateQueries({ queryKey: ["admin-pending-payments"] });
   };
