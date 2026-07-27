@@ -82,8 +82,13 @@ function AdminEventPage() {
   const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "" });
   const [editingLot, setEditingLot] = useState<any>(null);
   const [transferDeadline, setTransferDeadline] = useState("");
+  const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
+  const [coverBusy, setCoverBusy] = useState(false);
   useEffect(() => {
-    if (event) setTransferDeadline(toLocalInput(event.transfer_deadline));
+    if (event) {
+      setTransferDeadline(toLocalInput(event.transfer_deadline));
+      setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
+    }
   }, [event]);
 
   const saveTransferDeadline = async () => {
@@ -95,6 +100,38 @@ function AdminEventPage() {
     if (error) return toast.error(error.message);
     toast.success("Prazo de transferência salvo");
     qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const saveCaravanRegions = async () => {
+    const { error } = await supabase
+      .from("events")
+      .update({ caravan_regions: caravanRegions })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Regiões da caravana atualizadas");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const changeCover = async (file: File) => {
+    setCoverBusy(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("event-covers").upload(path, file);
+      if (up.error) throw up.error;
+      const { data } = await supabase.storage
+        .from("event-covers")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      const cover_url = data?.signedUrl ?? null;
+      const { error } = await supabase.from("events").update({ cover_url }).eq("id", id);
+      if (error) throw error;
+      toast.success("Capa atualizada");
+      qc.invalidateQueries({ queryKey: ["admin-event", id] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao atualizar capa");
+    } finally {
+      setCoverBusy(false);
+    }
   };
 
   const addLot = async () => {
