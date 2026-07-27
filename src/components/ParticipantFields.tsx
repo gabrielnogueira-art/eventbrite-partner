@@ -5,12 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 export type ParticipantData = {
   full_name: string;
   email: string;
+  phone?: string | null;
   wants_caravan?: boolean;
   cpf?: string | null;
   rg?: string | null;
   rg_issuer?: string | null;
   birth_date?: string | null;
-  phone?: string | null;
   address_zip?: string | null;
   address_street?: string | null;
   address_number?: string | null;
@@ -21,7 +21,8 @@ export type ParticipantData = {
   course_name?: string | null;
 };
 
-export const REGIONS_REQUIRING_CARAVAN = ["norte", "sul"];
+// Legacy — kept for compatibility. New code should use event.caravan_regions.
+export const REGIONS_REQUIRING_CARAVAN = ["Norte", "Sul"];
 
 export function ParticipantFields({
   value,
@@ -46,6 +47,16 @@ export function ParticipantFields({
       <div className="space-y-1">
         <Label>E-mail *</Label>
         <Input type="email" value={value.email} onChange={(e) => f("email", e.target.value)} required disabled={disabled} />
+      </div>
+      <div className="space-y-1 sm:col-span-2">
+        <Label>Telefone (com DDD) *</Label>
+        <Input
+          value={value.phone ?? ""}
+          onChange={(e) => f("phone", e.target.value)}
+          placeholder="(21) 99999-0000"
+          required
+          disabled={disabled}
+        />
       </div>
       {requireCaravan && (
         <div className="sm:col-span-2 flex items-center gap-2 rounded-md border bg-muted/30 p-3">
@@ -77,10 +88,6 @@ export function ParticipantFields({
           <div className="space-y-1">
             <Label>Órgão emissor *</Label>
             <Input value={value.rg_issuer ?? ""} onChange={(e) => f("rg_issuer", e.target.value)} required disabled={disabled} />
-          </div>
-          <div className="space-y-1">
-            <Label>Telefone (DDD) *</Label>
-            <Input value={value.phone ?? ""} onChange={(e) => f("phone", e.target.value)} required disabled={disabled} />
           </div>
           <div className="space-y-1">
             <Label>CEP *</Label>
@@ -123,12 +130,12 @@ export function ParticipantFields({
 export const emptyParticipant = (): ParticipantData => ({
   full_name: "",
   email: "",
+  phone: "",
   wants_caravan: false,
   cpf: "",
   rg: "",
   rg_issuer: "",
   birth_date: "",
-  phone: "",
   address_zip: "",
   address_street: "",
   address_number: "",
@@ -142,7 +149,7 @@ export const emptyParticipant = (): ParticipantData => ({
 export function validateCaravan(p: ParticipantData): string | null {
   if (!p.wants_caravan) return null;
   const need: (keyof ParticipantData)[] = [
-    "cpf","birth_date","rg","rg_issuer","phone","address_zip","address_street","address_number",
+    "cpf","birth_date","rg","rg_issuer","address_zip","address_street","address_number",
     "address_district","emergency_contact_name","emergency_contact_phone","university_id","course_name",
   ];
   for (const k of need) if (!p[k]) return `Preencha o campo ${k}`;
