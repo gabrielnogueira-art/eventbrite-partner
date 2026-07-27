@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Checkbox } from "@/components/ui/checkbox";
+import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
   component: AdminEventPage,
@@ -80,8 +82,13 @@ function AdminEventPage() {
   const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "" });
   const [editingLot, setEditingLot] = useState<any>(null);
   const [transferDeadline, setTransferDeadline] = useState("");
+  const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
+  const [coverBusy, setCoverBusy] = useState(false);
   useEffect(() => {
-    if (event) setTransferDeadline(toLocalInput(event.transfer_deadline));
+    if (event) {
+      setTransferDeadline(toLocalInput(event.transfer_deadline));
+      setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
+    }
   }, [event]);
 
   const saveTransferDeadline = async () => {
@@ -93,6 +100,38 @@ function AdminEventPage() {
     if (error) return toast.error(error.message);
     toast.success("Prazo de transferência salvo");
     qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const saveCaravanRegions = async () => {
+    const { error } = await supabase
+      .from("events")
+      .update({ caravan_regions: caravanRegions })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Regiões da caravana atualizadas");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const changeCover = async (file: File) => {
+    setCoverBusy(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("event-covers").upload(path, file);
+      if (up.error) throw up.error;
+      const { data } = await supabase.storage
+        .from("event-covers")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      const cover_url = data?.signedUrl ?? null;
+      const { error } = await supabase.from("events").update({ cover_url }).eq("id", id);
+      if (error) throw error;
+      toast.success("Capa atualizada");
+      qc.invalidateQueries({ queryKey: ["admin-event", id] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao atualizar capa");
+    } finally {
+      setCoverBusy(false);
+    }
   };
 
   const addLot = async () => {
@@ -303,6 +342,72 @@ function AdminEventPage() {
             )}
           </div>
         </Card>
+
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <ImageIcon className="h-5 w-5" /> Capa do evento
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Você pode trocar a imagem de capa a qualquer momento.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            {event.cover_url ? (
+              <img
+                src={event.cover_url}
+                alt="Capa atual"
+                className="h-24 w-40 rounded-md border object-cover"
+              />
+            ) : (
+              <div className="flex h-24 w-40 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                Sem capa
+              </div>
+            )}
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm hover:bg-accent">
+              <ImageIcon className="h-4 w-4" />
+              {coverBusy ? "Enviando..." : "Selecionar nova imagem"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={coverBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) changeCover(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <Plane className="h-5 w-5" /> Regiões com caravana
+          </h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Selecione as regiões cujas EJs verão a opção de caravana no checkout deste evento.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {REGIONS.map((r) => (
+              <label key={r} className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm">
+                <Checkbox
+                  checked={caravanRegions.includes(r)}
+                  onCheckedChange={(c) =>
+                    setCaravanRegions((prev) =>
+                      c === true ? [...prev, r] : prev.filter((x) => x !== r),
+                    )
+                  }
+                />
+                <span>{r}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveCaravanRegions}>Salvar regiões</Button>
+          </div>
+        </Card>
+
+
 
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>

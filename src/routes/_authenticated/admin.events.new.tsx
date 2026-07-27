@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Calendar, MapPin, AlignLeft, Info, Image as ImageIcon } from "lucide-react";
+import { Calendar, MapPin, AlignLeft, Info, Image as ImageIcon, Plane } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/new")({
   component: NewEventPage,
@@ -22,6 +24,7 @@ function NewEventPage() {
     if (isAdmin === false) navigate({ to: "/" });
   }, [isAdmin, navigate]);
   const [busy, setBusy] = useState(false);
+  const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,6 +60,7 @@ function NewEventPage() {
         ends_at: new Date(String(fd.get("ends_at"))).toISOString(),
         cancellation_policy: String(fd.get("cancellation_policy") ?? ""),
         max_tickets_per_user: Number(fd.get("max_tickets_per_user") || 5),
+        caravan_regions: caravanRegions,
         cover_url,
         created_by: user?.id,
       })
@@ -157,6 +161,34 @@ function NewEventPage() {
                 </div>
               </div>
             </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-foreground/80">
+                <Plane className="h-5 w-5" /> Caravana
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Selecione as regiões para as quais este evento oferecerá caravana. EJs dessas regiões
+                verão, no checkout, a opção de indicar interesse e preencher os campos adicionais.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {REGIONS.map((r) => (
+                  <label key={r} className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm">
+                    <Checkbox
+                      checked={caravanRegions.includes(r)}
+                      onCheckedChange={(c) =>
+                        setCaravanRegions((prev) =>
+                          c === true ? [...prev, r] : prev.filter((x) => x !== r),
+                        )
+                      }
+                    />
+                    <span>{r}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin" })}>

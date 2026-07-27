@@ -1,73 +1,60 @@
-## Visão geral
+# Plano de Implementação
 
-Sistema de venda de ingressos para eventos de Empresas Juniores, com dois painéis (usuário comprador e administrador), inspirado nas telas EVNTTZ enviadas. Backend via Lovable Cloud (auth + banco + storage + edge functions).
+Vou entregar tudo em uma sequência de mudanças coesas. Divisão em blocos:
 
-## Funcionalidades — Usuário (EJ)
+## 1. Banco de dados (uma migration)
 
-- **Login/Cadastro** (email + senha)
-- **Painel de eventos**: grid com capa, organizador, título, data e local + busca textual
-- **Página do evento**: capa, descrição, local (endereço), datas, lista de lotes ativos com preço e seletor de quantidade (limite definido pelo admin, padrão 5)
-- **Checkout (15 min de reserva)**:
-  - Formulário de participantes (nome + email por ingresso)
-  - Dados de cobrança (CPF/CNPJ, telefone, endereço completo)
-  - Escolha de pagamento: PIX (QR code mock) ou Cartão
-  - Timer regressivo; ao expirar, ingressos liberados
-- **Meus ingressos**: lista de pedidos e status (reservado, pago, cancelado, expirado)
+- `events`: adicionar `caravan_regions text[]` (padrão `{}`). Se vazio ou nulo → nenhuma caravana; se preenchido → checkbox de caravana aparece apenas para EJs cujas regiões estão na lista.
+- `order_participants.phone`: já existe; torná-lo obrigatório (NOT NULL) apenas em novos inserts (validação no frontend, sem constraint quebrando dados antigos).
+- `ej_directory`: adicionar RLS já existe; garantir CRUD via admin.
+- Nada de mudar `profiles` (já tem `ej_name`, `ej_slug`, `region`).
 
-## Funcionalidades — Administrador
+## 2. Checkout — telefone obrigatório e caravana condicional
 
-- **Login separado** (mesma tela, papel detectado via `user_roles`)
-- **Dashboard admin** com lista de eventos e métricas básicas (vendidos, receita)
-- **Criar/editar evento**: capa (upload), organizador, título, descrição, local, endereço, datas início/fim, política de cancelamento, máximo de ingressos por usuário
-- **Gerenciar lotes** (até ~5 por evento): nome, preço, quantidade total, data/hora de abertura, data/hora de encerramento
-- **Ver pedidos** de cada evento
+- `ParticipantFields.tsx`: mover campo **Telefone** para fora do bloco de caravana e marcá-lo como obrigatório sempre.
+- `checkout.$orderId.tsx`: validar telefone em todos os participantes. Passar `requireCaravan` = `profile.region ∈ event.caravan_regions`.
 
-## Liberação automática de reservas
+## 3. Admin — eventos
 
-Edge function agendada (ou checada on-read) marca pedidos `pending` com mais de 15 min como `expired` e devolve as quantidades ao estoque do lote.
+- `admin.events.new.tsx` e `admin.events.$id.tsx`:
+  - Adicionar multi-select de **Regiões com caravana** (checkboxes: Norte, Sul, Centro Sul 1, Centro Sul 2, Centro Norte).
+  - Permitir alterar a **capa** do evento na edição (mesmo componente de upload usado na criação).
 
-## Modelo de dados (resumo técnico)
+## 4. Perfil da EJ (usuário)
 
-- `profiles` (id, full_name, email)
-- `user_roles` (user_id, role: 'admin' | 'user') — separado, com `has_role()` SECURITY DEFINER
-- `events` (id, title, organizer, description, cover_url, location_name, address, starts_at, ends_at, cancellation_policy, max_tickets_per_user, created_by)
-- `ticket_lots` (id, event_id, name, price_cents, total_quantity, sold_quantity, opens_at, closes_at)
-- `orders` (id, user*id, event_id, lot_id, quantity, status, payment_method, total_cents, reserved_until, paid_at, billing*\*)
-- `order_participants` (id, order_id, full_name, email)
-- Storage bucket `event-covers` (público para leitura)
-- RLS: usuário vê só seus pedidos; admin (via `has_role`) gerencia eventos/lotes/pedidos; eventos e lotes públicos para leitura autenticada
+- Nova rota `/_authenticated/profile.tsx`: formulário para editar `full_name`, `ej_name`, `region` (select das 5 regiões). Salva em `profiles`.
+- Link "Meu Perfil" na sidebar (`AppShell.tsx`) para não-admins.
 
-## Rotas
+## 5. Redefinição de senha
 
-```text
-/auth                       login/cadastro
-/                           painel de eventos (usuário)
-/events/$id                 detalhes + seleção de ingressos
-/checkout/$orderId          formulário + pagamento (timer)
-/my-tickets                 meus pedidos
-/admin                      dashboard admin
-/admin/events/new           criar evento
-/admin/events/$id           editar evento + lotes + pedidos
-```
+- Em `/auth`: link "Esqueci minha senha" que chama `resetPasswordForEmail` com `redirectTo: origin + "/reset-password"`.
+- Nova rota pública `/reset-password.tsx`: form que chama `supabase.auth.updateUser({ password })`.
 
-## Pagamento
+## 6. Login com Google
 
-Mock nesta primeira versão: PIX gera QR code fictício e botão "Confirmar pagamento" (simulação); Cartão simula aprovação imediata. Integração real com Stripe/Mercado Pago pode ser adicionada depois.
+- Chamar `supabase--configure_social_auth` com `providers: ["google"]`.
+- Botão "Entrar com Google" em `/auth` usando `lovable.auth.signInWithOAuth("google", { redirect_uri: origin + "/auth/callback" })`.
+- Nova rota pública `/auth/callback.tsx`: aguarda sessão; se o perfil ainda não tem `ej_slug`, redireciona para `/onboarding` para o usuário escolher a EJ na lista `ej_directory`; caso contrário, para `/`.
+- Nova rota `/_authenticated/onboarding.tsx`: combobox de EJs (busca por nome), salva `ej_name`, `ej_slug`, `region` em `profiles`.
 
-## Design
+## 7. Admin — gerenciar EJs cadastradas (perfis de usuários)
 
-Paleta inspirada nos prints: azul vibrante (#2B7FFF) como primary, fundo claro neutro, cards com sombra suave, badges coloridos para organizador. Tipografia sans moderna (Inter).
+- Nova rota `/_authenticated/admin.ejs.tsx`: lista todos os `profiles` (via admin RLS já existente) mostrando EJ, e-mail, região; select para trocar a região.
 
-## Logins de teste
+## 8. Admin — gerenciar diretório de EJs Federadas
 
-Ao final, criarei via migration (seed) e te entrego:
+- Nova rota `/_authenticated/admin.directory.tsx`: CRUD sobre `ej_directory` (adicionar, editar nome/slug/região, excluir). RLS admin já existe.
+- Atualizar o diretório com base no PDF anexo (reprocessar `Região_das_EJs-2.pdf` e inserir/atualizar registros faltantes).
 
-- **Admin**: admin@portalej.test / Admin123!
-- **Usuário**: user@portalej.test / User123!
+## 9. Sidebar
 
-## Fora do escopo desta primeira versão
+- Adicionar itens: "Meu Perfil" (todos), "EJs Cadastradas" e "Diretório de EJs" (admin).
 
-- Limite de ingressos por usuário com base em base externa (futuro)
-- Integração real com gateway de pagamento
-- Envio real de email com ingressos (apenas registro no banco)
-- Cancelamento/reembolso pelo usuário
+## Detalhes técnicos
+
+- Regiões canônicas: `["Norte","Centro Norte","Centro Sul 1","Centro Sul 2","Sul"]` — constante em `src/lib/regions.ts` para reutilizar.
+- Uso do PDF: fazer parse via `document--parse_document` para atualizar `ej_directory` (insert/upsert por `slug`).
+- Google OAuth: `redirect_uri` deve ser rota pública (`/auth/callback`), nunca `/`.
+- `handle_new_user` já usa `ej_directory` para preencher região; login Google entra com metadata vazia e cai no fluxo de onboarding.
+
+Confirma que posso seguir?

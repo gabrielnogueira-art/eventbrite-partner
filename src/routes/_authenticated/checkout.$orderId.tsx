@@ -16,7 +16,6 @@ import {
   ParticipantFields,
   emptyParticipant,
   validateCaravan,
-  REGIONS_REQUIRING_CARAVAN,
   type ParticipantData,
 } from "@/components/ParticipantFields";
 
@@ -29,7 +28,6 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const [remaining, setRemaining] = useState<number>(0);
   const { data: profile } = useCurrentProfile();
-  const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [billing, setBilling] = useState({
     doc_type: "cpf",
@@ -51,7 +49,7 @@ function CheckoutPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, cover_url), ticket_lots(name, price_cents)")
+        .select("*, events(title, cover_url, caravan_regions), ticket_lots(name, price_cents)")
         .eq("id", orderId)
         .maybeSingle();
       if (error) throw error;
@@ -100,6 +98,8 @@ function CheckoutPage() {
         <div className="p-10 text-sm text-muted-foreground">Carregando...</div>
       </AppShell>
     );
+  const caravanRegions: string[] = (order.events as any)?.caravan_regions ?? [];
+  const requireCaravan = !!profile?.region && caravanRegions.includes(profile.region);
 
   if (order.status === "paid") {
     return (
@@ -160,8 +160,8 @@ function CheckoutPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (participants.some((p) => !p.full_name || !p.email))
-      return toast.error("Preencha todos os participantes");
+    if (participants.some((p) => !p.full_name || !p.email || !p.phone))
+      return toast.error("Preencha nome, e-mail e telefone de todos os participantes");
     if (requireCaravan) {
       for (const p of participants) {
         const err = validateCaravan(p);
@@ -255,7 +255,7 @@ function CheckoutPage() {
               <h2 className="text-lg font-semibold">Informações do participante</h2>
               <p className="mb-4 text-sm text-muted-foreground">
                 {requireCaravan
-                  ? `Sua EJ é da região ${profile?.region?.toUpperCase()}. Marque a caixa em cada participante interessado na caravana para liberar os campos adicionais.`
+                  ? `Este evento oferece caravana para a região ${profile?.region}. Marque a caixa em cada participante interessado para liberar os campos adicionais.`
                   : "Preencha os dados como devem aparecer no ingresso."}
               </p>
               <div className="space-y-6">

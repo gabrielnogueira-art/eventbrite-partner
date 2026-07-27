@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings, User, Users, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -100,6 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex flex-1 flex-col gap-1 p-3">
           <NavItem to="/" icon={Calendar} label="Eventos" />
           {!isAdmin && <NavItem to="/my-tickets" icon={Ticket} label="Meus Ingressos" />}
+          <NavItem to="/profile" icon={User} label="Meu Perfil" />
           {isAdmin && (
             <>
               <div className="mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -107,6 +108,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <NavItem to="/admin" icon={Shield} label="Eventos" />
               <NavItem to="/admin/payments" icon={Receipt} label="Pagamentos" />
+              <NavItem to="/admin/ejs" icon={Users} label="EJs cadastradas" />
+              <NavItem to="/admin/directory" icon={BookOpen} label="Diretório EJs" />
               <NavItem to="/admin/settings" icon={Settings} label="Configurações PIX" />
             </>
           )}
