@@ -108,8 +108,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <NavItem to="/admin" icon={Shield} label="Eventos" />
               <NavItem to="/admin/payments" icon={Receipt} label="Pagamentos" />
-              <NavItem to="/admin/ejs" icon={Users} label="EJs cadastradas" />
-              <NavItem to="/admin/directory" icon={BookOpen} label="Diretório EJs" />
+              <NavItem to="/admin/ej-requests" icon={Users} label="Trocas de EJ" />
+              <NavItem to="/admin/ejs" icon={Users} label="Usuários Cadastrados" />
+              <NavItem to="/admin/directory" icon={BookOpen} label="Lista de EJs" />
               <NavItem to="/admin/settings" icon={Settings} label="Configurações PIX" />
             </>
           )}
