@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings, User, Users, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
