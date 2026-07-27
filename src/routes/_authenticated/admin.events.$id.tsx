@@ -230,10 +230,11 @@ function AdminEventPage() {
       opens_at: new Date(newLot.opens).toISOString(),
       closes_at: new Date(newLot.closes).toISOString(),
       sort_order: lots.length + 1,
+      assigned_ej_slug: newLot.assigned_ej_slug && newLot.assigned_ej_slug !== "__all__" ? newLot.assigned_ej_slug : null,
     });
     if (error) return toast.error(error.message);
     toast.success("Lote criado");
-    setNewLot({ name: "", price: "", total: "", opens: "", closes: "" });
+    setNewLot({ name: "", price: "", total: "", opens: "", closes: "", assigned_ej_slug: "__all__" });
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
   };
 
