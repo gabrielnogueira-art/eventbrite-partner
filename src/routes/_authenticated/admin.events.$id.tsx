@@ -263,6 +263,7 @@ function AdminEventPage() {
         total_quantity: parseInt(editingLot.total),
         opens_at: new Date(editingLot.opens).toISOString(),
         closes_at: new Date(editingLot.closes).toISOString(),
+        assigned_ej_slug: editingLot.assigned_ej_slug && editingLot.assigned_ej_slug !== "__all__" ? editingLot.assigned_ej_slug : null,
       })
       .eq("id", editingLot.id);
 
