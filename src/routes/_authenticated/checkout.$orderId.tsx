@@ -98,6 +98,8 @@ function CheckoutPage() {
         <div className="p-10 text-sm text-muted-foreground">Carregando...</div>
       </AppShell>
     );
+  const caravanRegions: string[] = (order.events as any)?.caravan_regions ?? [];
+  const requireCaravan = !!profile?.region && caravanRegions.includes(profile.region);
 
   if (order.status === "paid") {
     return (
