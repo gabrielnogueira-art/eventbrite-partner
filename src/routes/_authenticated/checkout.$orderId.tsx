@@ -216,19 +216,27 @@ function CheckoutPage() {
         })
         .eq("id", orderId);
 
-      const path = `${uid}/${orderId}-${Date.now()}.${fileExt(proofFile.name)}`;
-      const { error: upErr } = await supabase.storage
-        .from("payment-proofs")
-        .upload(path, proofFile, { contentType: proofFile.type, upsert: false });
-      if (upErr) throw upErr;
+      if (payMethod === "credit_card") {
+        const { error: rpcErr } = await supabase.rpc("submit_credit_card_review", {
+          _order_id: orderId,
+        });
+        if (rpcErr) throw rpcErr;
+        toast.success("Pedido enviado! Aguarde o contato da RioJunior.");
+      } else {
+        const file = proofFile!;
+        const path = `${uid}/${orderId}-${Date.now()}.${fileExt(file.name)}`;
+        const { error: upErr } = await supabase.storage
+          .from("payment-proofs")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
 
-      const { error: rpcErr } = await supabase.rpc("submit_payment_proof", {
-        _order_id: orderId,
-        _proof_url: path,
-      });
-      if (rpcErr) throw rpcErr;
-
-      toast.success("Comprovante enviado! Aguarde a confirmação do admin.");
+        const { error: rpcErr } = await supabase.rpc("submit_payment_proof", {
+          _order_id: orderId,
+          _proof_url: path,
+        });
+        if (rpcErr) throw rpcErr;
+        toast.success("Comprovante enviado! Aguarde a confirmação do admin.");
+      }
       await refetchOrder();
       navigate({ to: "/my-tickets" });
     } catch (err: any) {
