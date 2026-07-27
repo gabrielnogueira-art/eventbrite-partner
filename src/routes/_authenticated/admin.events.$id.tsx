@@ -164,16 +164,22 @@ function AdminEventPage() {
     qc.invalidateQueries({ queryKey: ["admin-event", id] });
   };
 
-  const moveLot = async (lot: any, dir: -1 | 1) => {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const handleDragEnd = async (evt: DragEndEvent) => {
+    const { active, over } = evt;
+    if (!over || active.id === over.id) return;
     const list = [...lots] as any[];
-    const idx = list.findIndex((l) => l.id === lot.id);
-    const swap = idx + dir;
-    if (swap < 0 || swap >= list.length) return;
-    const other = list[swap];
-    const a = supabase.from("ticket_lots").update({ sort_order: other.sort_order }).eq("id", lot.id);
-    const b = supabase.from("ticket_lots").update({ sort_order: lot.sort_order }).eq("id", other.id);
-    const [r1, r2] = await Promise.all([a, b]);
-    if (r1.error || r2.error) return toast.error(r1.error?.message ?? r2.error?.message ?? "Erro");
+    const oldIdx = list.findIndex((l) => l.id === active.id);
+    const newIdx = list.findIndex((l) => l.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(list, oldIdx, newIdx);
+    // Persist sequential sort_order 1..n
+    const updates = reordered.map((l, i) =>
+      supabase.from("ticket_lots").update({ sort_order: i + 1 }).eq("id", l.id),
+    );
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error);
+    if (err?.error) return toast.error(err.error.message);
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
   };
 
