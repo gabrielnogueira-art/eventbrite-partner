@@ -162,6 +162,34 @@ function NewEventPage() {
               </div>
             </div>
 
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-foreground/80">
+                <Plane className="h-5 w-5" /> Caravana
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Selecione as regiões para as quais este evento oferecerá caravana. EJs dessas regiões
+                verão, no checkout, a opção de indicar interesse e preencher os campos adicionais.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {REGIONS.map((r) => (
+                  <label key={r} className="flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm">
+                    <Checkbox
+                      checked={caravanRegions.includes(r)}
+                      onCheckedChange={(c) =>
+                        setCaravanRegions((prev) =>
+                          c === true ? [...prev, r] : prev.filter((x) => x !== r),
+                        )
+                      }
+                    />
+                    <span>{r}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin" })}>
                 Cancelar
