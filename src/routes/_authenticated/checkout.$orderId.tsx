@@ -28,7 +28,6 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const [remaining, setRemaining] = useState<number>(0);
   const { data: profile } = useCurrentProfile();
-  const requireCaravan = REGIONS_REQUIRING_CARAVAN.includes(profile?.region ?? "");
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [billing, setBilling] = useState({
     doc_type: "cpf",
