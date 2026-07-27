@@ -78,6 +78,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           ends_at: string
+          event_kind: string
           id: string
           is_published: boolean
           location_name: string | null
@@ -96,6 +97,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_at: string
+          event_kind?: string
           id?: string
           is_published?: boolean
           location_name?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_at?: string
+          event_kind?: string
           id?: string
           is_published?: boolean
           location_name?: string | null
@@ -348,6 +351,7 @@ export type Database = {
       }
       ticket_lots: {
         Row: {
+          assigned_ej_slug: string | null
           closes_at: string
           created_at: string
           event_id: string
@@ -361,6 +365,7 @@ export type Database = {
           total_quantity: number
         }
         Insert: {
+          assigned_ej_slug?: string | null
           closes_at: string
           created_at?: string
           event_id: string
@@ -374,6 +379,7 @@ export type Database = {
           total_quantity: number
         }
         Update: {
+          assigned_ej_slug?: string | null
           closes_at?: string
           created_at?: string
           event_id?: string
@@ -456,6 +462,10 @@ export type Database = {
       }
       reject_payment_proof: {
         Args: { _notes: string; _order_id: string }
+        Returns: undefined
+      }
+      submit_credit_card_review: {
+        Args: { _order_id: string }
         Returns: undefined
       }
       submit_payment_proof: {
