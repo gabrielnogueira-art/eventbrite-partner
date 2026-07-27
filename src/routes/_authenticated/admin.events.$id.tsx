@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, ArrowUp, ArrowDown, Users } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { REGIONS } from "@/lib/regions";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
@@ -79,17 +81,98 @@ function AdminEventPage() {
   });
   const ejMap = new Map(ejProfiles.map((p: any) => [p.id, p]));
 
-  const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "" });
+  const [newLot, setNewLot] = useState({ name: "", price: "", total: "", opens: "", closes: "", assigned_ej_slug: "__all__" });
   const [editingLot, setEditingLot] = useState<any>(null);
   const [transferDeadline, setTransferDeadline] = useState("");
   const [caravanRegions, setCaravanRegions] = useState<string[]>([]);
   const [coverBusy, setCoverBusy] = useState(false);
+  const [eventKind, setEventKind] = useState<"portal_bj" | "independent">("portal_bj");
+  const [info, setInfo] = useState({
+    title: "",
+    organizer: "",
+    description: "",
+    location_name: "",
+    address: "",
+    starts_at: "",
+    ends_at: "",
+    cancellation_policy: "",
+    max_tickets_per_user: 5,
+  });
+  const [infoBusy, setInfoBusy] = useState(false);
+  const [kindBusy, setKindBusy] = useState(false);
+
+  const { data: directory = [] } = useQuery({
+    queryKey: ["ej-directory-admin"],
+    queryFn: async () =>
+      (await supabase.from("ej_directory").select("slug, name, region").order("name")).data ?? [],
+  });
+
   useEffect(() => {
     if (event) {
       setTransferDeadline(toLocalInput(event.transfer_deadline));
       setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
+      setEventKind(((event as any).event_kind ?? "portal_bj") as "portal_bj" | "independent");
+      setInfo({
+        title: event.title ?? "",
+        organizer: event.organizer ?? "",
+        description: event.description ?? "",
+        location_name: event.location_name ?? "",
+        address: event.address ?? "",
+        starts_at: toLocalInput(event.starts_at),
+        ends_at: toLocalInput(event.ends_at),
+        cancellation_policy: event.cancellation_policy ?? "",
+        max_tickets_per_user: event.max_tickets_per_user ?? 5,
+      });
     }
   }, [event]);
+
+  const saveInfo = async () => {
+    if (!info.title || !info.organizer || !info.starts_at || !info.ends_at)
+      return toast.error("Preencha os campos obrigatórios do evento");
+    if (new Date(info.ends_at) <= new Date(info.starts_at))
+      return toast.error("O término deve ser posterior ao início.");
+    setInfoBusy(true);
+    const { error } = await supabase
+      .from("events")
+      .update({
+        title: info.title,
+        organizer: info.organizer,
+        description: info.description || null,
+        location_name: info.location_name || null,
+        address: info.address || null,
+        starts_at: new Date(info.starts_at).toISOString(),
+        ends_at: new Date(info.ends_at).toISOString(),
+        cancellation_policy: info.cancellation_policy || null,
+        max_tickets_per_user: Number(info.max_tickets_per_user) || 5,
+      })
+      .eq("id", id);
+    setInfoBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Informações do evento atualizadas");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const saveEventKind = async () => {
+    setKindBusy(true);
+    const { error } = await supabase.from("events").update({ event_kind: eventKind }).eq("id", id);
+    setKindBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Tipo do evento atualizado");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
+
+  const moveLot = async (lot: any, dir: -1 | 1) => {
+    const list = [...lots] as any[];
+    const idx = list.findIndex((l) => l.id === lot.id);
+    const swap = idx + dir;
+    if (swap < 0 || swap >= list.length) return;
+    const other = list[swap];
+    const a = supabase.from("ticket_lots").update({ sort_order: other.sort_order }).eq("id", lot.id);
+    const b = supabase.from("ticket_lots").update({ sort_order: lot.sort_order }).eq("id", other.id);
+    const [r1, r2] = await Promise.all([a, b]);
+    if (r1.error || r2.error) return toast.error(r1.error?.message ?? r2.error?.message ?? "Erro");
+    qc.invalidateQueries({ queryKey: ["admin-lots", id] });
+  };
 
   const saveTransferDeadline = async () => {
     const value = transferDeadline ? new Date(transferDeadline).toISOString() : null;
