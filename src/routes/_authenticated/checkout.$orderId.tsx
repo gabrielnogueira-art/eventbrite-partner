@@ -16,7 +16,6 @@ import {
   ParticipantFields,
   emptyParticipant,
   validateCaravan,
-  REGIONS_REQUIRING_CARAVAN,
   type ParticipantData,
 } from "@/components/ParticipantFields";
 
