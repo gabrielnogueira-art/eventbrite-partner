@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ej_change_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          current_ej_name: string | null
+          current_ej_slug: string | null
+          current_region: string | null
+          id: string
+          reason: string | null
+          requested_ej_name: string
+          requested_ej_slug: string
+          requested_region: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          current_ej_name?: string | null
+          current_ej_slug?: string | null
+          current_region?: string | null
+          id?: string
+          reason?: string | null
+          requested_ej_name: string
+          requested_ej_slug: string
+          requested_region: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          current_ej_name?: string | null
+          current_ej_slug?: string | null
+          current_region?: string | null
+          id?: string
+          reason?: string | null
+          requested_ej_name?: string
+          requested_ej_slug?: string
+          requested_region?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ej_directory: {
         Row: {
           created_at: string
@@ -425,6 +479,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_ej_change: {
+        Args: { _notes?: string; _request_id: string }
+        Returns: undefined
+      }
       approve_order_by_admin: {
         Args: { _notes?: string; _order_id: string; _redemption_link: string }
         Returns: undefined
@@ -460,10 +518,15 @@ export type Database = {
         Args: { _order_id: string; _paddle_tx?: string }
         Returns: undefined
       }
+      reject_ej_change: {
+        Args: { _notes?: string; _request_id: string }
+        Returns: undefined
+      }
       reject_payment_proof: {
         Args: { _notes: string; _order_id: string }
         Returns: undefined
       }
+      request_ej_change: { Args: { _slug: string }; Returns: string }
       submit_credit_card_review: {
         Args: { _order_id: string }
         Returns: undefined

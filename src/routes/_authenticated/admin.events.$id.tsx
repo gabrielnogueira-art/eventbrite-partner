@@ -9,12 +9,41 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, GripVertical, Users } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { REGIONS } from "@/lib/regions";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+
+function SortableLotRow({
+  id,
+  children,
+}: {
+  id: string;
+  children: (args: {
+    listeners: SyntheticListenerMap | undefined;
+    setActivatorNodeRef: (node: HTMLElement | null) => void;
+  }) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children({ listeners, setActivatorNodeRef })}
+    </div>
+  );
+}
+
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id")({
   component: AdminEventPage,
@@ -161,16 +190,22 @@ function AdminEventPage() {
     qc.invalidateQueries({ queryKey: ["admin-event", id] });
   };
 
-  const moveLot = async (lot: any, dir: -1 | 1) => {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const handleDragEnd = async (evt: DragEndEvent) => {
+    const { active, over } = evt;
+    if (!over || active.id === over.id) return;
     const list = [...lots] as any[];
-    const idx = list.findIndex((l) => l.id === lot.id);
-    const swap = idx + dir;
-    if (swap < 0 || swap >= list.length) return;
-    const other = list[swap];
-    const a = supabase.from("ticket_lots").update({ sort_order: other.sort_order }).eq("id", lot.id);
-    const b = supabase.from("ticket_lots").update({ sort_order: lot.sort_order }).eq("id", other.id);
-    const [r1, r2] = await Promise.all([a, b]);
-    if (r1.error || r2.error) return toast.error(r1.error?.message ?? r2.error?.message ?? "Erro");
+    const oldIdx = list.findIndex((l) => l.id === active.id);
+    const newIdx = list.findIndex((l) => l.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(list, oldIdx, newIdx);
+    // Persist sequential sort_order 1..n
+    const updates = reordered.map((l, i) =>
+      supabase.from("ticket_lots").update({ sort_order: i + 1 }).eq("id", l.id),
+    );
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error);
+    if (err?.error) return toast.error(err.error.message);
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
   };
 
@@ -580,133 +615,141 @@ function AdminEventPage() {
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>
           <div className="space-y-2">
-            {lots.map((l: any, idx: number) =>
-              editingLot?.id === l.id ? (
-                <div key={l.id} className="grid gap-3 rounded-lg border p-4 bg-muted/30">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Nome</Label>
-                      <Input
-                        value={editingLot.name}
-                        onChange={(e) => setEditingLot({ ...editingLot, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Preço (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={editingLot.price}
-                        onChange={(e) => setEditingLot({ ...editingLot, price: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Qtd. Total</Label>
-                      <Input
-                        type="number"
-                        value={editingLot.total}
-                        onChange={(e) => setEditingLot({ ...editingLot, total: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Abre em</Label>
-                      <Input
-                        type="datetime-local"
-                        value={editingLot.opens}
-                        onChange={(e) => setEditingLot({ ...editingLot, opens: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Fecha em</Label>
-                      <Input
-                        type="datetime-local"
-                        value={editingLot.closes}
-                        onChange={(e) => setEditingLot({ ...editingLot, closes: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1 sm:col-span-2 lg:col-span-5">
-                      <Label className="text-xs flex items-center gap-1"><Users className="h-3 w-3" /> EJ vinculada (opcional)</Label>
-                      <Select
-                        value={editingLot.assigned_ej_slug ?? "__all__"}
-                        onValueChange={(v) => setEditingLot({ ...editingLot, assigned_ej_slug: v })}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__all__">Todas as EJs</SelectItem>
-                          {(directory as any[]).map((d) => (
-                            <SelectItem key={d.slug} value={d.slug}>{d.name} · {d.region}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-[11px] text-muted-foreground">Se selecionada, apenas essa EJ verá este lote no checkout.</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-2">
-                    <Button size="sm" variant="ghost" onClick={() => setEditingLot(null)}>
-                      <X className="mr-2 h-4 w-4" />
-                      Cancelar
-                    </Button>
-                    <Button size="sm" onClick={updateLot}>
-                      <Check className="mr-2 h-4 w-4" />
-                      Salvar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key={l.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="font-medium min-w-[120px]">{l.name}</div>
-                    {l.assigned_ej_slug && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        EJ: {(directory as any[]).find((d) => d.slug === l.assigned_ej_slug)?.name ?? l.assigned_ej_slug}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground">
-                    {fmtBRL(l.price_cents)} · {l.sold_quantity}/{l.total_quantity} vendidos
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {fmtDateTime(l.opens_at)} → {fmtDateTime(l.closes_at)}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" disabled={idx === 0} onClick={() => moveLot(l, -1)} title="Mover para cima">
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" disabled={idx === lots.length - 1} onClick={() => moveLot(l, 1)} title="Mover para baixo">
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        setEditingLot({
-                          id: l.id,
-                          name: l.name,
-                          price: (l.price_cents / 100).toFixed(2),
-                          total: l.total_quantity.toString(),
-                          opens: toLocalInput(l.opens_at),
-                          closes: toLocalInput(l.closes_at),
-                          assigned_ej_slug: l.assigned_ej_slug ?? "__all__",
-                        })
-                      }
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => removeLot(l)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ),
-            )}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={(lots as any[]).map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                {lots.map((l: any) => (
+                  <SortableLotRow key={l.id} id={l.id}>
+                    {({ listeners, setActivatorNodeRef }) =>
+                      editingLot?.id === l.id ? (
+                        <div className="grid gap-3 rounded-lg border p-4 bg-muted/30">
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Nome</Label>
+                              <Input
+                                value={editingLot.name}
+                                onChange={(e) => setEditingLot({ ...editingLot, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Preço (R$)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={editingLot.price}
+                                onChange={(e) => setEditingLot({ ...editingLot, price: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Qtd. Total</Label>
+                              <Input
+                                type="number"
+                                value={editingLot.total}
+                                onChange={(e) => setEditingLot({ ...editingLot, total: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Abre em</Label>
+                              <Input
+                                type="datetime-local"
+                                value={editingLot.opens}
+                                onChange={(e) => setEditingLot({ ...editingLot, opens: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Fecha em</Label>
+                              <Input
+                                type="datetime-local"
+                                value={editingLot.closes}
+                                onChange={(e) => setEditingLot({ ...editingLot, closes: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-1 sm:col-span-2 lg:col-span-5">
+                              <Label className="text-xs flex items-center gap-1"><Users className="h-3 w-3" /> EJ vinculada (opcional)</Label>
+                              <Select
+                                value={editingLot.assigned_ej_slug ?? "__all__"}
+                                onValueChange={(v) => setEditingLot({ ...editingLot, assigned_ej_slug: v })}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__all__">Todas as EJs</SelectItem>
+                                  {(directory as any[]).map((d) => (
+                                    <SelectItem key={d.slug} value={d.slug}>{d.name} · {d.region}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-[11px] text-muted-foreground">Se selecionada, apenas essa EJ verá este lote no checkout.</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 mt-2">
+                            <Button size="sm" variant="ghost" onClick={() => setEditingLot(null)}>
+                              <X className="mr-2 h-4 w-4" />
+                              Cancelar
+                            </Button>
+                            <Button size="sm" onClick={updateLot}>
+                              <Check className="mr-2 h-4 w-4" />
+                              Salvar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm hover:border-primary/50 transition-colors">
+                          <button
+                            ref={setActivatorNodeRef}
+                            {...listeners}
+                            type="button"
+                            className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-accent active:cursor-grabbing"
+                            title="Arraste para reordenar"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="font-medium min-w-[120px]">{l.name}</div>
+                            {l.assigned_ej_slug && (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                EJ: {(directory as any[]).find((d) => d.slug === l.assigned_ej_slug)?.name ?? l.assigned_ej_slug}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {fmtBRL(l.price_cents)} · {l.sold_quantity}/{l.total_quantity} vendidos
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {fmtDateTime(l.opens_at)} → {fmtDateTime(l.closes_at)}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setEditingLot({
+                                  id: l.id,
+                                  name: l.name,
+                                  price: (l.price_cents / 100).toFixed(2),
+                                  total: l.total_quantity.toString(),
+                                  opens: toLocalInput(l.opens_at),
+                                  closes: toLocalInput(l.closes_at),
+                                  assigned_ej_slug: l.assigned_ej_slug ?? "__all__",
+                                })
+                              }
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => removeLot(l)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    }
+                  </SortableLotRow>
+                ))}
+              </SortableContext>
+            </DndContext>
             {lots.length === 0 && (
               <div className="text-sm text-muted-foreground">Nenhum lote ainda.</div>
             )}

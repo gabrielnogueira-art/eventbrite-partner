@@ -44,7 +44,7 @@ function DirectoryPage() {
   const [editing, setEditing] = useState<{ id: string; name: string; region: string } | null>(null);
 
   const { data: rows = [] } = useQuery({
-    queryKey: ["ej-directory-admin"],
+    queryKey: ["ej-directory-list"],
     queryFn: async () =>
       (await supabase.from("ej_directory").select("*").order("region").order("name")).data ?? [],
   });
@@ -67,8 +67,9 @@ function DirectoryPage() {
     if (error) return toast.error(error.message);
     toast.success("EJ adicionada");
     setNewEJ({ name: "", region: REGIONS[0] as string });
-    qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
     qc.invalidateQueries({ queryKey: ["ej-directory"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
   const save = async () => {
@@ -80,6 +81,8 @@ function DirectoryPage() {
     if (error) return toast.error(error.message);
     toast.success("Atualizado");
     setEditing(null);
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory"] });
     qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
@@ -88,6 +91,8 @@ function DirectoryPage() {
     const { error } = await supabase.from("ej_directory").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Removido");
+    qc.invalidateQueries({ queryKey: ["ej-directory-list"] });
+    qc.invalidateQueries({ queryKey: ["ej-directory"] });
     qc.invalidateQueries({ queryKey: ["ej-directory-admin"] });
   };
 
@@ -99,7 +104,7 @@ function DirectoryPage() {
             <Building2 className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Diretório de EJs Federadas</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Lista de EJs</h1>
             <p className="text-sm text-muted-foreground">Base oficial de EJs federadas à RioJunior por região.</p>
           </div>
         </div>
