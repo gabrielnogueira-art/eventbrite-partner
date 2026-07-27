@@ -104,7 +104,7 @@ function DirectoryPage() {
             <Building2 className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Diretório de EJs Federadas</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Lista de EJs</h1>
             <p className="text-sm text-muted-foreground">Base oficial de EJs federadas à RioJunior por região.</p>
           </div>
         </div>
