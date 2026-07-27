@@ -71,20 +71,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Portal EJ — Ingressos" },
-      { name: "description", content: "Sistema de ingressos para eventos de Empresas Juniores." },
-      { property: "og:title", content: "Portal EJ — Ingressos" },
+      { title: "RioJunior - Portal de Ingressos" },
+      { name: "description", content: "Sistema de ingressos para eventos da RioJunior" },
+      { property: "og:title", content: "RioJunior - Portal de Ingressos" },
       {
         property: "og:description",
-        content: "Sistema de ingressos para eventos de Empresas Juniores.",
+        content: "Sistema de ingressos para eventos da RioJunior",
       },
-      { name: "twitter:title", content: "Portal EJ — Ingressos" },
+      { name: "twitter:title", content: "RioJunior - Portal de Ingressos" },
       {
         name: "twitter:description",
-        content: "Sistema de ingressos para eventos de Empresas Juniores.",
+        content: "Sistema de ingressos para eventos da RioJunior",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cdcee52-98a6-41ca-921e-2d429d5cf906/id-preview-2dd9774e--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1785196119699.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cdcee52-98a6-41ca-921e-2d429d5cf906/id-preview-2dd9774e--ce38fd4a-b58a-4ff1-b67f-3286cda673ef.lovable.app-1785196119699.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
