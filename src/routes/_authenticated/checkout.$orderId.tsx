@@ -43,6 +43,7 @@ function CheckoutPage() {
   });
   const [busy, setBusy] = useState(false);
   const [proofFile, setProofFile] = useState<File | null>(null);
+  const [payMethod, setPayMethod] = useState<"pix" | "credit_card">("pix");
 
   const { data: order, refetch: refetchOrder } = useQuery({
     queryKey: ["order", orderId],
@@ -116,14 +117,18 @@ function CheckoutPage() {
   }
 
   if (order.status === "awaiting_review") {
+    const isCard = order.payment_method === "credit_card";
     return (
       <AppShell>
         <div className="mx-auto max-w-md p-10 text-center">
           <Clock className="mx-auto h-12 w-12 text-amber-500" />
-          <h2 className="mt-3 text-xl font-semibold">Comprovante em análise</h2>
+          <h2 className="mt-3 text-xl font-semibold">
+            {isCard ? "Pedido em análise" : "Comprovante em análise"}
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Recebemos seu comprovante. Assim que o admin confirmar o pagamento, o link de resgate
-            será liberado em "Meus Ingressos".
+            {isCard
+              ? "Aguarde o contato de alguém da RioJunior para finalizar o pagamento no cartão de crédito. Após a confirmação, o link/presença será liberado em \"Meus Ingressos\"."
+              : "Recebemos seu comprovante. Assim que o admin confirmar o pagamento, o link de resgate será liberado em \"Meus Ingressos\"."}
           </p>
           <Button className="mt-4" onClick={() => navigate({ to: "/my-tickets" })}>
             Ir para meus ingressos
@@ -177,7 +182,8 @@ function CheckoutPage() {
       !billing.state
     )
       return toast.error("Preencha os dados de cobrança");
-    if (!proofFile) return toast.error("Envie o comprovante do PIX");
+    if (payMethod === "pix" && !proofFile)
+      return toast.error("Envie o comprovante do PIX");
 
     setBusy(true);
     try {
