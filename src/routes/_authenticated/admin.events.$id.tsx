@@ -406,6 +406,12 @@ function AdminEventPage() {
         Matrícula: p.university_id ?? "",
         Curso: p.course_name ?? "",
         "Transferido em": p.transferred_at ? fmtDateTime(p.transferred_at) : "",
+        ...Object.fromEntries(
+          formItems
+            .filter((it) => isQuestion(it.type))
+            .map((it) => [it.label, answerToText((p.custom_answers ?? {})[it.id])]),
+        ),
+
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
