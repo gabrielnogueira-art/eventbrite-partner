@@ -53,7 +53,7 @@ function CheckoutPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, cover_url, caravan_regions), ticket_lots(name, price_cents)")
+        .select("*, events(title, cover_url, caravan_regions, form_schema), ticket_lots(name, price_cents)")
         .eq("id", orderId)
         .maybeSingle();
       if (error) throw error;
