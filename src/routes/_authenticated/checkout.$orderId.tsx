@@ -178,6 +178,11 @@ function CheckoutPage() {
         if (err) return toast.error(`Dados de caravana incompletos: ${p.full_name || "—"}`);
       }
     }
+    for (const p of participants) {
+      const err = validateAnswers(formItems, p.custom_answers ?? {});
+      if (err) return toast.error(`${p.full_name || "Participante"}: ${err}`);
+    }
+
     if (
       !billing.doc ||
       !billing.zip ||
