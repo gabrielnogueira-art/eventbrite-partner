@@ -134,7 +134,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
         </aside>
-        <main className="flex-1 overflow-x-hidden">{children}</main>
+        <main className="flex-1 overflow-x-hidden">
+          <NotificationsBanner />
+          {children}
+        </main>
+
       </div>
     </div>
   );
