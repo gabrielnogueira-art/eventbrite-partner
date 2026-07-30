@@ -9,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, GripVertical, Users } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, GripVertical, Users, ListChecks } from "lucide-react";
+import { FormBuilder } from "@/components/FormBuilder";
+import { parseSchema, answerToText, isQuestion, type FormItem } from "@/lib/form-schema";
+
 import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
