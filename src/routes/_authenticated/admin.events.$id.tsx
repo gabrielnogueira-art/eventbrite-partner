@@ -324,7 +324,7 @@ function AdminEventPage() {
       );
       const { error } = await supabase.rpc("delete_lot_by_admin", {
         _lot_id: lot.id,
-        _message: custom && custom.trim() ? custom.trim() : null,
+        _message: custom && custom.trim() ? custom.trim() : undefined,
       });
       if (error) return toast.error(error.message);
       toast.success("Lote excluído e compradores notificados");
