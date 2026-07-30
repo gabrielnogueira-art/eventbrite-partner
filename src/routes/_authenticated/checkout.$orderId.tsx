@@ -104,6 +104,8 @@ function CheckoutPage() {
     );
   const caravanRegions: string[] = (order.events as any)?.caravan_regions ?? [];
   const requireCaravan = !!profile?.region && caravanRegions.includes(profile.region);
+  const formItems = parseSchema((order.events as any)?.form_schema);
+
 
   if (order.status === "paid") {
     return (
