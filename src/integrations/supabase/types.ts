@@ -133,6 +133,7 @@ export type Database = {
           description: string | null
           ends_at: string
           event_kind: string
+          form_schema: Json
           id: string
           is_published: boolean
           location_name: string | null
@@ -152,6 +153,7 @@ export type Database = {
           description?: string | null
           ends_at: string
           event_kind?: string
+          form_schema?: Json
           id?: string
           is_published?: boolean
           location_name?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           description?: string | null
           ends_at?: string
           event_kind?: string
+          form_schema?: Json
           id?: string
           is_published?: boolean
           location_name?: string | null
@@ -179,6 +182,33 @@ export type Database = {
           starts_at?: string
           title?: string
           transfer_deadline?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -192,6 +222,7 @@ export type Database = {
           course_name: string | null
           cpf: string | null
           created_at: string
+          custom_answers: Json
           ej_owner_id: string | null
           email: string
           emergency_contact_name: string | null
@@ -216,6 +247,7 @@ export type Database = {
           course_name?: string | null
           cpf?: string | null
           created_at?: string
+          custom_answers?: Json
           ej_owner_id?: string | null
           email: string
           emergency_contact_name?: string | null
@@ -240,6 +272,7 @@ export type Database = {
           course_name?: string | null
           cpf?: string | null
           created_at?: string
+          custom_answers?: Json
           ej_owner_id?: string | null
           email?: string
           emergency_contact_name?: string | null
@@ -506,6 +539,10 @@ export type Database = {
         Args: { _lot_id: string; _quantity: number }
         Returns: string
       }
+      delete_lot_by_admin: {
+        Args: { _lot_id: string; _message?: string }
+        Returns: undefined
+      }
       fail_order_by_admin: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
@@ -514,6 +551,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      recalc_lot_reserved: { Args: { _lot_id: string }; Returns: undefined }
       refund_order_by_admin: {
         Args: { _order_id: string; _paddle_tx?: string }
         Returns: undefined
