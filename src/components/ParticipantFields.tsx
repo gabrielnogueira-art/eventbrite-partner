@@ -146,7 +146,7 @@ export const emptyParticipant = (): ParticipantData => ({
   emergency_contact_phone: "",
   university_id: "",
   course_name: "",
-  course_name: "",
+
   custom_answers: {},
 });
 
