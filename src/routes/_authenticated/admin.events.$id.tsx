@@ -633,6 +633,26 @@ function AdminEventPage() {
         </Card>
 
         <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <ListChecks className="h-5 w-5" /> Formulário do evento
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Monte o formulário que cada participante responderá no checkout, como em um Google
+            Forms: perguntas (resposta curta, parágrafo, múltipla escolha, caixas de seleção, lista
+            suspensa, escala linear, data e horário) e blocos de título, imagem, vídeo e seção.
+            Os campos básicos (nome, e-mail, telefone e caravana) continuam sempre presentes.
+          </p>
+          <FormBuilder items={formItems} onChange={setFormItems} />
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveForm} disabled={formBusy}>
+              {formBusy ? "Salvando..." : "Salvar formulário"}
+            </Button>
+          </div>
+        </Card>
+
+
+
+        <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>
           <div className="space-y-2">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
