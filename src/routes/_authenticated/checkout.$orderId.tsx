@@ -18,6 +18,9 @@ import {
   validateCaravan,
   type ParticipantData,
 } from "@/components/ParticipantFields";
+import { CustomFormRenderer } from "@/components/CustomFormRenderer";
+import { parseSchema, validateAnswers } from "@/lib/form-schema";
+
 
 export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
   component: CheckoutPage,
