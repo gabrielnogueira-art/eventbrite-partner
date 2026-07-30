@@ -132,6 +132,20 @@ function AdminEventPage() {
   });
   const [infoBusy, setInfoBusy] = useState(false);
   const [kindBusy, setKindBusy] = useState(false);
+  const [formItems, setFormItems] = useState<FormItem[]>([]);
+  const [formBusy, setFormBusy] = useState(false);
+
+  const saveForm = async () => {
+    setFormBusy(true);
+    const { error } = await supabase
+      .from("events")
+      .update({ form_schema: formItems as any })
+      .eq("id", id);
+    setFormBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Formulário salvo");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
 
   const { data: directory = [] } = useQuery({
     queryKey: ["ej-directory-admin"],
@@ -144,6 +158,8 @@ function AdminEventPage() {
       setTransferDeadline(toLocalInput(event.transfer_deadline));
       setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
       setEventKind(((event as any).event_kind ?? "portal_bj") as "portal_bj" | "independent");
+      setFormItems(parseSchema((event as any).form_schema));
+
       setInfo({
         title: event.title ?? "",
         organizer: event.organizer ?? "",
