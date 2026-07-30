@@ -309,15 +309,35 @@ function AdminEventPage() {
   };
 
   const removeLot = async (lot: any) => {
-    if (lot.sold_quantity > 0)
-      return toast.error(
-        "Não é possível remover um lote que já possui vendas. Edite-o e mude sua data de fechamento.",
+    const hasSales = lot.sold_quantity > 0 || lot.reserved_quantity > 0;
+    if (hasSales) {
+      const ok = confirm(
+        `⚠️ O lote "${lot.name}" possui ${lot.sold_quantity} ingresso(s) vendido(s) e ${lot.reserved_quantity} reservado(s).\n\n` +
+          "Ao excluir, os pedidos serão cancelados e os compradores receberão um aviso de que o lote foi cancelado e que serão contatados em breve.\n\nDeseja continuar?",
       );
-    if (!confirm("Remover este lote?")) return;
-    const { error } = await supabase.from("ticket_lots").delete().eq("id", lot.id);
-    if (error) return toast.error(error.message);
+      if (!ok) return;
+      const typed = prompt('Digite "EXCLUIR" em maiúsculas para confirmar:');
+      if (typed !== "EXCLUIR") return toast.info("Exclusão cancelada");
+      const custom = prompt(
+        "Mensagem enviada aos compradores (deixe em branco para usar o aviso padrão):",
+        "",
+      );
+      const { error } = await supabase.rpc("delete_lot_by_admin", {
+        _lot_id: lot.id,
+        _message: custom && custom.trim() ? custom.trim() : null,
+      });
+      if (error) return toast.error(error.message);
+      toast.success("Lote excluído e compradores notificados");
+    } else {
+      if (!confirm("Remover este lote?")) return;
+      const { error } = await supabase.from("ticket_lots").delete().eq("id", lot.id);
+      if (error) return toast.error(error.message);
+      toast.success("Lote removido");
+    }
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
+    qc.invalidateQueries({ queryKey: ["admin-orders", id] });
   };
+
 
   const paidParticipants = orders
     .filter((o: any) => o.status === "paid")
