@@ -286,6 +286,20 @@ function CheckoutPage() {
                       }
                       requireCaravan={requireCaravan}
                     />
+                    {formItems.length > 0 && (
+                      <div className="mt-5 border-t pt-4">
+                        <CustomFormRenderer
+                          items={formItems}
+                          answers={p.custom_answers ?? {}}
+                          onChange={(next) =>
+                            setParticipants((s) =>
+                              s.map((x, j) => (j === i ? { ...x, custom_answers: next } : x)),
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+
                   </div>
                 ))}
               </div>
