@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { NotificationsBanner } from "@/components/NotificationsBanner";
+
 
 
 export function useIsAdmin() {
