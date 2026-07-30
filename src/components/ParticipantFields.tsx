@@ -146,7 +146,10 @@ export const emptyParticipant = (): ParticipantData => ({
   emergency_contact_phone: "",
   university_id: "",
   course_name: "",
+  course_name: "",
+  custom_answers: {},
 });
+
 
 export function validateCaravan(p: ParticipantData): string | null {
   if (!p.wants_caravan) return null;
