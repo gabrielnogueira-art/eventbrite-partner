@@ -18,6 +18,9 @@ import {
   validateCaravan,
   type ParticipantData,
 } from "@/components/ParticipantFields";
+import { CustomFormRenderer } from "@/components/CustomFormRenderer";
+import { parseSchema, validateAnswers } from "@/lib/form-schema";
+
 
 export const Route = createFileRoute("/_authenticated/checkout/$orderId")({
   component: CheckoutPage,
@@ -50,7 +53,7 @@ function CheckoutPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, cover_url, caravan_regions), ticket_lots(name, price_cents)")
+        .select("*, events(title, cover_url, caravan_regions, form_schema), ticket_lots(name, price_cents)")
         .eq("id", orderId)
         .maybeSingle();
       if (error) throw error;
@@ -101,6 +104,8 @@ function CheckoutPage() {
     );
   const caravanRegions: string[] = (order.events as any)?.caravan_regions ?? [];
   const requireCaravan = !!profile?.region && caravanRegions.includes(profile.region);
+  const formItems = parseSchema((order.events as any)?.form_schema);
+
 
   if (order.status === "paid") {
     return (
@@ -173,6 +178,11 @@ function CheckoutPage() {
         if (err) return toast.error(`Dados de caravana incompletos: ${p.full_name || "—"}`);
       }
     }
+    for (const p of participants) {
+      const err = validateAnswers(formItems, p.custom_answers ?? {});
+      if (err) return toast.error(`${p.full_name || "Participante"}: ${err}`);
+    }
+
     if (
       !billing.doc ||
       !billing.zip ||
@@ -283,6 +293,20 @@ function CheckoutPage() {
                       }
                       requireCaravan={requireCaravan}
                     />
+                    {formItems.length > 0 && (
+                      <div className="mt-5 border-t pt-4">
+                        <CustomFormRenderer
+                          items={formItems}
+                          answers={p.custom_answers ?? {}}
+                          onChange={(next) =>
+                            setParticipants((s) =>
+                              s.map((x, j) => (j === i ? { ...x, custom_answers: next } : x)),
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+
                   </div>
                 ))}
               </div>

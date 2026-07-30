@@ -9,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, GripVertical, Users } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check, Download, AlertTriangle, Image as ImageIcon, Plane, Info, GripVertical, Users, ListChecks } from "lucide-react";
+import { FormBuilder } from "@/components/FormBuilder";
+import { parseSchema, answerToText, isQuestion, type FormItem } from "@/lib/form-schema";
+
 import * as XLSX from "xlsx";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,6 +132,20 @@ function AdminEventPage() {
   });
   const [infoBusy, setInfoBusy] = useState(false);
   const [kindBusy, setKindBusy] = useState(false);
+  const [formItems, setFormItems] = useState<FormItem[]>([]);
+  const [formBusy, setFormBusy] = useState(false);
+
+  const saveForm = async () => {
+    setFormBusy(true);
+    const { error } = await supabase
+      .from("events")
+      .update({ form_schema: formItems as any })
+      .eq("id", id);
+    setFormBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Formulário salvo");
+    qc.invalidateQueries({ queryKey: ["admin-event", id] });
+  };
 
   const { data: directory = [] } = useQuery({
     queryKey: ["ej-directory-admin"],
@@ -141,6 +158,8 @@ function AdminEventPage() {
       setTransferDeadline(toLocalInput(event.transfer_deadline));
       setCaravanRegions(((event as any).caravan_regions ?? []) as string[]);
       setEventKind(((event as any).event_kind ?? "portal_bj") as "portal_bj" | "independent");
+      setFormItems(parseSchema((event as any).form_schema));
+
       setInfo({
         title: event.title ?? "",
         organizer: event.organizer ?? "",
@@ -309,15 +328,35 @@ function AdminEventPage() {
   };
 
   const removeLot = async (lot: any) => {
-    if (lot.sold_quantity > 0)
-      return toast.error(
-        "Não é possível remover um lote que já possui vendas. Edite-o e mude sua data de fechamento.",
+    const hasSales = lot.sold_quantity > 0 || lot.reserved_quantity > 0;
+    if (hasSales) {
+      const ok = confirm(
+        `⚠️ O lote "${lot.name}" possui ${lot.sold_quantity} ingresso(s) vendido(s) e ${lot.reserved_quantity} reservado(s).\n\n` +
+          "Ao excluir, os pedidos serão cancelados e os compradores receberão um aviso de que o lote foi cancelado e que serão contatados em breve.\n\nDeseja continuar?",
       );
-    if (!confirm("Remover este lote?")) return;
-    const { error } = await supabase.from("ticket_lots").delete().eq("id", lot.id);
-    if (error) return toast.error(error.message);
+      if (!ok) return;
+      const typed = prompt('Digite "EXCLUIR" em maiúsculas para confirmar:');
+      if (typed !== "EXCLUIR") return toast.info("Exclusão cancelada");
+      const custom = prompt(
+        "Mensagem enviada aos compradores (deixe em branco para usar o aviso padrão):",
+        "",
+      );
+      const { error } = await supabase.rpc("delete_lot_by_admin", {
+        _lot_id: lot.id,
+        _message: custom && custom.trim() ? custom.trim() : undefined,
+      });
+      if (error) return toast.error(error.message);
+      toast.success("Lote excluído e compradores notificados");
+    } else {
+      if (!confirm("Remover este lote?")) return;
+      const { error } = await supabase.from("ticket_lots").delete().eq("id", lot.id);
+      if (error) return toast.error(error.message);
+      toast.success("Lote removido");
+    }
     qc.invalidateQueries({ queryKey: ["admin-lots", id] });
+    qc.invalidateQueries({ queryKey: ["admin-orders", id] });
   };
+
 
   const paidParticipants = orders
     .filter((o: any) => o.status === "paid")
@@ -367,6 +406,12 @@ function AdminEventPage() {
         Matrícula: p.university_id ?? "",
         Curso: p.course_name ?? "",
         "Transferido em": p.transferred_at ? fmtDateTime(p.transferred_at) : "",
+        ...Object.fromEntries(
+          formItems
+            .filter((it) => isQuestion(it.type))
+            .map((it) => [it.label, answerToText((p.custom_answers ?? {})[it.id])]),
+        ),
+
       };
     });
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -611,6 +656,26 @@ function AdminEventPage() {
             <Button onClick={saveEventKind} disabled={kindBusy}>{kindBusy ? "Salvando..." : "Salvar tipo"}</Button>
           </div>
         </Card>
+
+        <Card className="p-6">
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <ListChecks className="h-5 w-5" /> Formulário do evento
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Monte o formulário que cada participante responderá no checkout, como em um Google
+            Forms: perguntas (resposta curta, parágrafo, múltipla escolha, caixas de seleção, lista
+            suspensa, escala linear, data e horário) e blocos de título, imagem, vídeo e seção.
+            Os campos básicos (nome, e-mail, telefone e caravana) continuam sempre presentes.
+          </p>
+          <FormBuilder items={formItems} onChange={setFormItems} />
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveForm} disabled={formBusy}>
+              {formBusy ? "Salvando..." : "Salvar formulário"}
+            </Button>
+          </div>
+        </Card>
+
+
 
         <Card className="p-6">
           <h2 className="mb-4 text-lg font-semibold">Lotes</h2>

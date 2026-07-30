@@ -19,7 +19,9 @@ export type ParticipantData = {
   emergency_contact_phone?: string | null;
   university_id?: string | null;
   course_name?: string | null;
+  custom_answers?: Record<string, string | string[]>;
 };
+
 
 // Legacy — kept for compatibility. New code should use event.caravan_regions.
 export const REGIONS_REQUIRING_CARAVAN = ["Norte", "Sul"];
@@ -144,7 +146,10 @@ export const emptyParticipant = (): ParticipantData => ({
   emergency_contact_phone: "",
   university_id: "",
   course_name: "",
+
+  custom_answers: {},
 });
+
 
 export function validateCaravan(p: ParticipantData): string | null {
   if (!p.wants_caravan) return null;
