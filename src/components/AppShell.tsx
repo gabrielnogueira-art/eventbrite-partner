@@ -1,8 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings, User, Users, BookOpen } from "lucide-react";
+import { Calendar, Ticket, Shield, LogOut, Home, Building2, Receipt, Settings, User, Users, BookOpen, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { NotificationsBanner } from "@/components/NotificationsBanner";
 
