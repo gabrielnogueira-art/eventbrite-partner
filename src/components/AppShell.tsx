@@ -64,6 +64,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { data: isAdmin } = useIsAdmin();
   const { data: profile } = useCurrentProfile();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [path]);
+
 
   const handleSignOut = async () => {
     await qc.cancelQueries();
