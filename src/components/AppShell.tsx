@@ -89,59 +89,87 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   };
 
+  const NavContent = () => (
+    <nav className="flex flex-1 flex-col gap-1 p-3">
+      <NavItem to="/" icon={Calendar} label="Eventos" />
+      {!isAdmin && <NavItem to="/my-tickets" icon={Ticket} label="Meus Ingressos" />}
+      <NavItem to="/profile" icon={User} label="Meu Perfil" />
+      {isAdmin && (
+        <>
+          <div className="mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Admin
+          </div>
+          <NavItem to="/admin" icon={Shield} label="Eventos" />
+          <NavItem to="/admin/payments" icon={Receipt} label="Pagamentos" />
+          <NavItem to="/admin/ej-requests" icon={Users} label="Trocas de EJ" />
+          <NavItem to="/admin/ejs" icon={Users} label="Usuários Cadastrados" />
+          <NavItem to="/admin/directory" icon={BookOpen} label="Lista de EJs" />
+          <NavItem to="/admin/settings" icon={Settings} label="Configurações PIX" />
+        </>
+      )}
+      <div className="mt-auto space-y-2 pt-6">
+        {profile?.ej_name && (
+          <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
+            <Building2 className="h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <div className="truncate font-semibold">{profile.ej_name}</div>
+              <div className="truncate text-muted-foreground">{profile.email}</div>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-accent hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </button>
+      </div>
+    </nav>
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <PaymentTestModeBanner />
+      <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:hidden">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger
+            aria-label="Abrir menu"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+          >
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 bg-sidebar p-0">
+            <SheetTitle className="sr-only">Menu</SheetTitle>
+            <div className="flex h-14 items-center gap-2 border-b px-5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
+                P
+              </div>
+              <span className="text-base font-bold tracking-tight">Portal EJ</span>
+            </div>
+            <div className="flex h-[calc(100%-3.5rem)] flex-col overflow-y-auto">
+              <NavContent />
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-base font-bold tracking-tight">Portal EJ</span>
+        </div>
+      </header>
       <div className="flex flex-1">
         <aside className="hidden w-64 shrink-0 border-r bg-sidebar md:flex md:flex-col">
-        <div className="flex h-16 items-center gap-2 border-b px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            P
+          <div className="flex h-16 items-center gap-2 border-b px-6">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
+              P
+            </div>
+            <span className="text-lg font-bold tracking-tight">Portal EJ</span>
           </div>
-          <span className="text-lg font-bold tracking-tight">Portal EJ</span>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1 p-3">
-          <NavItem to="/" icon={Calendar} label="Eventos" />
-          {!isAdmin && <NavItem to="/my-tickets" icon={Ticket} label="Meus Ingressos" />}
-          <NavItem to="/profile" icon={User} label="Meu Perfil" />
-          {isAdmin && (
-            <>
-              <div className="mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Admin
-              </div>
-              <NavItem to="/admin" icon={Shield} label="Eventos" />
-              <NavItem to="/admin/payments" icon={Receipt} label="Pagamentos" />
-              <NavItem to="/admin/ej-requests" icon={Users} label="Trocas de EJ" />
-              <NavItem to="/admin/ejs" icon={Users} label="Usuários Cadastrados" />
-              <NavItem to="/admin/directory" icon={BookOpen} label="Lista de EJs" />
-              <NavItem to="/admin/settings" icon={Settings} label="Configurações PIX" />
-            </>
-          )}
-          <div className="mt-auto space-y-2">
-            {profile?.ej_name && (
-              <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
-                <Building2 className="h-4 w-4 shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <div className="truncate font-semibold">{profile.ej_name}</div>
-                  <div className="truncate text-muted-foreground">{profile.email}</div>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-accent hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
-          </div>
-        </nav>
+          <NavContent />
         </aside>
-        <main className="flex-1 overflow-x-hidden">
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           <NotificationsBanner />
           {children}
         </main>
-
       </div>
     </div>
   );
