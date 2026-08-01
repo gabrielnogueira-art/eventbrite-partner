@@ -99,7 +99,10 @@ function EventPage() {
             {lots.map((l) => {
               const opens = new Date(l.opens_at);
               const closes = new Date(l.closes_at);
-              const available = l.total_quantity - l.sold_quantity - l.reserved_quantity;
+              const available = Math.max(
+                0,
+                l.total_quantity - l.sold_quantity - l.reserved_quantity,
+              );
               const isOpen = now >= opens && now <= closes && available > 0;
               const status =
                 available <= 0
