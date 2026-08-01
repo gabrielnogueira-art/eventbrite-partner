@@ -777,6 +777,19 @@ function AdminEventPage() {
                           </div>
                           <div className="text-muted-foreground">
                             {fmtBRL(l.price_cents)} · {l.sold_quantity}/{l.total_quantity} vendidos
+                            {l.reserved_quantity > 0 && (
+                              <span className="ml-1 text-amber-600">
+                                · {l.reserved_quantity} reservado(s)
+                              </span>
+                            )}
+                            <span className="ml-1">
+                              ·{" "}
+                              {Math.max(
+                                0,
+                                l.total_quantity - l.sold_quantity - l.reserved_quantity,
+                              )}{" "}
+                              disponíveis
+                            </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {fmtDateTime(l.opens_at)} → {fmtDateTime(l.closes_at)}
